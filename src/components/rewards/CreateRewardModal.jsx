@@ -160,3 +160,4 @@ export default function CreateRewardModal({ isOpen, onClose, onRewardCreated }) 
     </div>
   )
 }
+

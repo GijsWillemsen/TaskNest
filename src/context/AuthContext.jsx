@@ -25,7 +25,7 @@ export function AuthProvider({ children }) {
         return data
       }
 
-      // If profile record does not exist yet (e.g., registered via email confirmation or direct auth)
+      // If profile record does not exist yet and we have an authenticated user:
       const roleToSet = fallbackRole || 'kid'
       const { data: newProfile, error: upsertError } = await supabase
         .from('profiles')
@@ -50,7 +50,7 @@ export function AuthProvider({ children }) {
 
   const refreshProfile = useCallback(async () => {
     if (user?.id) {
-      return await fetchProfile(user.id)
+      return await fetchProfile(user.id, user.user_metadata?.role)
     }
     return null
   }, [user, fetchProfile])
@@ -106,9 +106,11 @@ export function AuthProvider({ children }) {
 
   const signUp = async ({ email, password, role }) => {
     setLoading(true)
+    const cleanEmail = email.trim().toLowerCase()
+
     try {
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: cleanEmail,
         password,
         options: {
           data: {
@@ -119,8 +121,10 @@ export function AuthProvider({ children }) {
 
       if (error) throw error
 
-      // If a session or user is returned immediately (e.g. email confirmation disabled or auto-confirmed)
-      if (data?.user) {
+      // Only attempt client profile upsert if an active session was created
+      // (If email confirmation is ON, session is null and RLS blocks unauthenticated inserts;
+      // the profile will be created automatically upon first login when confirmed)
+      if (data?.session && data?.user) {
         const { error: profileError } = await supabase
           .from('profiles')
           .upsert({
@@ -130,7 +134,7 @@ export function AuthProvider({ children }) {
           })
 
         if (profileError) {
-          console.warn('Profile creation error during signup:', profileError.message)
+          console.warn('Profile creation note:', profileError.message)
         } else {
           await fetchProfile(data.user.id, role)
         }
@@ -144,9 +148,11 @@ export function AuthProvider({ children }) {
 
   const signIn = async ({ email, password }) => {
     setLoading(true)
+    const cleanEmail = email.trim().toLowerCase()
+
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: cleanEmail,
         password,
       })
       if (error) throw error
@@ -154,6 +160,16 @@ export function AuthProvider({ children }) {
     } finally {
       setLoading(false)
     }
+  }
+
+  const resendConfirmation = async (email) => {
+    const cleanEmail = email.trim().toLowerCase()
+    const { data, error } = await supabase.auth.resend({
+      type: 'signup',
+      email: cleanEmail,
+    })
+    if (error) throw error
+    return data
   }
 
   const signOut = async () => {
@@ -177,6 +193,7 @@ export function AuthProvider({ children }) {
     signUp,
     signIn,
     signOut,
+    resendConfirmation,
     refreshProfile,
   }
 

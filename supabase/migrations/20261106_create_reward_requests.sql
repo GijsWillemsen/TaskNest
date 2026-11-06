@@ -38,3 +38,4 @@ CREATE POLICY "Allow authenticated delete reward_requests"
 ON public.reward_requests FOR DELETE
 TO authenticated
 USING (true);
+
