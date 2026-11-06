@@ -40,3 +40,4 @@ export async function awardBonusPoints(kidId, pointsToAdd) {
   if (error) throw error
   return data
 }
+
