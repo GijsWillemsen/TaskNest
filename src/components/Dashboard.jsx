@@ -7,9 +7,9 @@ import {
   CheckSquare,
   Gift,
   Coins,
-  Users,
 } from 'lucide-react'
 import TaskList from './tasks/TaskList'
+import RewardsList from './rewards/RewardsList'
 import '../styles/auth.css'
 
 export default function Dashboard() {
@@ -123,42 +123,14 @@ export default function Dashboard() {
           />
         )}
 
-        {/* Tab 2: Rewards Store Preview */}
+        {/* Tab 2: Rewards Store & Request Management */}
         {activeTab === 'rewards' && (
-          <section className="placeholder-grid">
-            <div className="placeholder-card">
-              <div className="placeholder-card-header">
-                <div className="placeholder-icon rewards">
-                  <Gift size={20} />
-                </div>
-                <h2>Rewards Store</h2>
-              </div>
-              <p>
-                {isParent
-                  ? 'Set up rewards like 1 hour of screen time, pizza night, or a family outing for your kids to redeem with points.'
-                  : `You have ${points} points! Redeem points for fun rewards once parents add them.`}
-              </p>
-              <button className="placeholder-btn" disabled>
-                {isParent ? '+ New Reward (Ready to activate)' : 'Browse Store (Ready to activate)'}
-              </button>
-            </div>
-
-            <div className="placeholder-card">
-              <div className="placeholder-card-header">
-                <div className="placeholder-icon family">
-                  <Users size={20} />
-                </div>
-                <h2>Family Stats</h2>
-              </div>
-              <p>
-                Connected to Supabase PostgreSQL database. All chores and points synchronize live
-                across family devices.
-              </p>
-              <button className="placeholder-btn" disabled>
-                Family Settings
-              </button>
-            </div>
-          </section>
+          <RewardsList
+            role={role}
+            kidId={user?.id}
+            points={points}
+            onPointsRefresh={refreshProfile}
+          />
         )}
       </main>
     </div>
