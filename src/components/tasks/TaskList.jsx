@@ -12,6 +12,7 @@ import {
 import TaskCard from './TaskCard'
 import CreateTaskModal from './CreateTaskModal'
 import { getTasks } from '../../services/taskService'
+import { supabase } from '../../supabaseClient'
 import '../../styles/tasks.css'
 
 export default function TaskList({ role, currentUserId, onPointsRefresh }) {
@@ -45,10 +46,24 @@ export default function TaskList({ role, currentUserId, onPointsRefresh }) {
 
     loadTasks()
 
+    // Realtime subscription for live family updates
+    const channel = supabase
+      .channel('tasks-live-updates')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tasks' },
+        () => {
+          loadTasks()
+          if (onPointsRefresh) onPointsRefresh()
+        }
+      )
+      .subscribe()
+
     return () => {
       isMounted = false
+      supabase.removeChannel(channel)
     }
-  }, [])
+  }, [onPointsRefresh])
 
   // Manual refresh
   const handleManualRefresh = useCallback(async () => {

@@ -31,8 +31,16 @@ export default function SignUp() {
     setErrorMsg('')
     setInfoMsg('')
 
-    if (!email || !password) {
+    const cleanEmail = email.trim().toLowerCase()
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+    if (!cleanEmail || !password) {
       setErrorMsg('Please enter both email and password.')
+      return
+    }
+
+    if (!emailRegex.test(cleanEmail)) {
+      setErrorMsg('Please enter a valid email address (e.g. name@family.com).')
       return
     }
 
@@ -48,20 +56,27 @@ export default function SignUp() {
 
     setSubmitting(true)
     try {
-      const data = await signUp({ email, password, role })
+      const data = await signUp({ email: cleanEmail, password, role })
 
-      // If Supabase has email confirmation enabled, data.session might be null
+      // If Supabase has email confirmation enabled, data.session is null
       if (data?.user && !data?.session) {
         setInfoMsg(
-          'Account created successfully! Please check your email inbox to verify your address before logging in.'
+          'Confirmation email sent! Please check your inbox and click the verification link before logging in. (Tip: You can also disable "Confirm email" in Supabase Auth settings to log in immediately).'
         )
       } else {
-        // Immediate login
+        // Immediate session created
         navigate('/')
       }
     } catch (err) {
       console.error('Sign-up failed:', err)
-      setErrorMsg(err.message || 'Failed to create account. Please try again.')
+      const raw = err.message || ''
+      if (raw.toLowerCase().includes('unable to validate email') || raw.toLowerCase().includes('invalid format')) {
+        setErrorMsg('Invalid email format. Please check for typos and enter a valid email (e.g. name@gmail.com).')
+      } else if (raw.toLowerCase().includes('already registered')) {
+        setErrorMsg('This email is already registered. Please sign in instead.')
+      } else {
+        setErrorMsg(raw || 'Failed to create account. Please try again.')
+      }
     } finally {
       setSubmitting(false)
     }
