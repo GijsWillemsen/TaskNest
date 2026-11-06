@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useAuth } from '../context/useAuth'
 import {
   Sparkles,
@@ -8,10 +9,12 @@ import {
   Coins,
   Users,
 } from 'lucide-react'
+import TaskList from './tasks/TaskList'
 import '../styles/auth.css'
 
 export default function Dashboard() {
-  const { user, profile, role, points, signOut } = useAuth()
+  const { user, profile, role, points, signOut, refreshProfile } = useAuth()
+  const [activeTab, setActiveTab] = useState('chores') // 'chores', 'rewards'
 
   const isParent = role === 'parent'
   const isKid = role === 'kid'
@@ -28,8 +31,18 @@ export default function Dashboard() {
         </div>
 
         <div className="nav-actions">
+          {/* Points Pill */}
+          <div
+            className="points-pill"
+            style={{ padding: '0.4rem 0.85rem', fontSize: '0.95rem' }}
+            title={isKid ? 'Your Available Points' : 'Family Points Overview'}
+          >
+            <Coins size={17} color="var(--discord-yellow)" />
+            <span>{points} pts</span>
+          </div>
+
           <button onClick={signOut} className="signout-btn" title="Sign out of TaskNest">
-            <LogOut size={16} />
+            <LogOut size={15} />
             <span>Sign Out</span>
           </button>
         </div>
@@ -37,7 +50,7 @@ export default function Dashboard() {
 
       {/* Main Content Area */}
       <main className="dashboard-main">
-        {/* Welcome & Profile Summary Card */}
+        {/* Welcome & Profile Summary Banner */}
         <section className="welcome-banner">
           <div className="welcome-info">
             <h1>Welcome, {user?.email?.split('@')[0]}! 👋</h1>
@@ -49,75 +62,104 @@ export default function Dashboard() {
                 Role: {role || 'Kid'}
               </span>
 
-              {/* Status note */}
               <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
-                Profile ID: {profile?.id ? profile.id.slice(0, 8) : user?.id?.slice(0, 8)}...
+                Account: {profile?.id ? profile.id.slice(0, 8) : user?.id?.slice(0, 8)}...
               </span>
             </div>
           </div>
 
-          {/* Points Pill (Kids earn & spend points, parents monitor points) */}
-          <div className="points-pill" title={isKid ? 'Your Earned Points' : 'Family Points Overview'}>
-            <Coins size={22} color="var(--discord-yellow)" />
-            <span>{points} pts</span>
-          </div>
-        </section>
-
-        {/* Informative placeholder cards showcasing upcoming features */}
-        <section className="placeholder-grid">
-          {/* Tasks Card */}
-          <div className="placeholder-card">
-            <div className="placeholder-card-header">
-              <div className="placeholder-icon tasks">
-                <CheckSquare size={20} />
-              </div>
-              <h2>{isParent ? 'Manage Tasks' : 'My Chores'}</h2>
-            </div>
-            <p>
-              {isParent
-                ? 'Create chores, set point values, and approve completed tasks submitted by your kids.'
-                : 'Browse available chores, complete tasks, and earn points towards rewards!'}
-            </p>
-            <button className="placeholder-btn" disabled>
-              {isParent ? '+ New Task (Coming Next)' : 'View Chores (Coming Next)'}
+          {/* Navigation Pill Switcher */}
+          <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-surface-elevated)', padding: '4px', borderRadius: '10px' }}>
+            <button
+              onClick={() => setActiveTab('chores')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '0.5rem 0.9rem',
+                borderRadius: '8px',
+                border: 'none',
+                background: activeTab === 'chores' ? 'var(--discord-blurple)' : 'transparent',
+                color: activeTab === 'chores' ? '#ffffff' : 'var(--text-muted)',
+                fontWeight: 600,
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <CheckSquare size={15} />
+              Chores
             </button>
-          </div>
 
-          {/* Rewards Card */}
-          <div className="placeholder-card">
-            <div className="placeholder-card-header">
-              <div className="placeholder-icon rewards">
-                <Gift size={20} />
-              </div>
-              <h2>Rewards Store</h2>
-            </div>
-            <p>
-              {isParent
-                ? 'Define rewards like screen time, games, or treats that kids can unlock with points.'
-                : 'Redeem your points for fun rewards and family privileges!'}
-            </p>
-            <button className="placeholder-btn" disabled>
-              Browse Rewards (Coming Next)
-            </button>
-          </div>
-
-          {/* Family / Role info */}
-          <div className="placeholder-card">
-            <div className="placeholder-card-header">
-              <div className="placeholder-icon family">
-                <Users size={20} />
-              </div>
-              <h2>Family Sync</h2>
-            </div>
-            <p>
-              Signed in as <strong>{role === 'parent' ? 'Parent' : 'Kid'}</strong>. Your role is
-              persisted in the Supabase <code>profiles</code> table.
-            </p>
-            <button className="placeholder-btn" disabled>
-              Family Settings (Coming Next)
+            <button
+              onClick={() => setActiveTab('rewards')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '0.5rem 0.9rem',
+                borderRadius: '8px',
+                border: 'none',
+                background: activeTab === 'rewards' ? 'var(--discord-blurple)' : 'transparent',
+                color: activeTab === 'rewards' ? '#ffffff' : 'var(--text-muted)',
+                fontWeight: 600,
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <Gift size={15} />
+              Rewards
             </button>
           </div>
         </section>
+
+        {/* Tab 1: Core Chores & Tasks System */}
+        {activeTab === 'chores' && (
+          <TaskList
+            role={role}
+            currentUserId={user?.id}
+            onPointsRefresh={refreshProfile}
+          />
+        )}
+
+        {/* Tab 2: Rewards Store Preview */}
+        {activeTab === 'rewards' && (
+          <section className="placeholder-grid">
+            <div className="placeholder-card">
+              <div className="placeholder-card-header">
+                <div className="placeholder-icon rewards">
+                  <Gift size={20} />
+                </div>
+                <h2>Rewards Store</h2>
+              </div>
+              <p>
+                {isParent
+                  ? 'Set up rewards like 1 hour of screen time, pizza night, or a family outing for your kids to redeem with points.'
+                  : `You have ${points} points! Redeem points for fun rewards once parents add them.`}
+              </p>
+              <button className="placeholder-btn" disabled>
+                {isParent ? '+ New Reward (Ready to activate)' : 'Browse Store (Ready to activate)'}
+              </button>
+            </div>
+
+            <div className="placeholder-card">
+              <div className="placeholder-card-header">
+                <div className="placeholder-icon family">
+                  <Users size={20} />
+                </div>
+                <h2>Family Stats</h2>
+              </div>
+              <p>
+                Connected to Supabase PostgreSQL database. All chores and points synchronize live
+                across family devices.
+              </p>
+              <button className="placeholder-btn" disabled>
+                Family Settings
+              </button>
+            </div>
+          </section>
+        )}
       </main>
     </div>
   )

@@ -1,44 +1,20 @@
 import { supabase } from '../supabaseClient'
 
 /**
- * Fetch all tasks from Supabase, including the claimant's profile if claimed.
+ * Fetch all tasks
  */
 export async function getTasks() {
   const { data, error } = await supabase
     .from('tasks')
-    .select(`
-      id,
-      title,
-      description,
-      points_value,
-      status,
-      claimed_by,
-      profiles:claimed_by (
-        id,
-        role,
-        points
-      )
-    `)
+    .select('*')
     .order('id', { ascending: false })
 
-  if (error) {
-    // If foreign key relation `profiles:claimed_by` isn't declared in PostgREST schema,
-    // fallback to a standard flat select
-    console.warn('Nested profiles query failed, falling back to flat select:', error.message)
-    const { data: flatData, error: flatError } = await supabase
-      .from('tasks')
-      .select('*')
-      .order('id', { ascending: false })
-
-    if (flatError) throw flatError
-    return flatData || []
-  }
-
+  if (error) throw error
   return data || []
 }
 
 /**
- * Parent creates a new chore
+ * Parent creates a new task
  */
 export async function createTask({ title, description, points_value }) {
   const points = parseInt(points_value, 10) || 10
@@ -61,9 +37,10 @@ export async function createTask({ title, description, points_value }) {
 }
 
 /**
- * Kid claims an open chore
+ * Kid claims an open task (atomic check to avoid race conditions with siblings)
  */
 export async function claimTask(taskId, kidId) {
+  // Only claim if the task is still currently 'open'
   const { data, error } = await supabase
     .from('tasks')
     .update({
@@ -71,6 +48,30 @@ export async function claimTask(taskId, kidId) {
       claimed_by: kidId,
     })
     .eq('id', taskId)
+    .eq('status', 'open')
+    .select()
+
+  if (error) throw error
+
+  // If no rows were updated, a sibling just claimed it
+  if (!data || data.length === 0) {
+    throw new Error('Oops! This task was just claimed by a family member.')
+  }
+
+  return data[0]
+}
+
+/**
+ * Kid marks task as finished (sends to parent for approval)
+ */
+export async function finishTask(taskId, kidId) {
+  const { data, error } = await supabase
+    .from('tasks')
+    .update({
+      status: 'pending_approval',
+    })
+    .eq('id', taskId)
+    .eq('claimed_by', kidId)
     .select()
     .single()
 
@@ -79,9 +80,9 @@ export async function claimTask(taskId, kidId) {
 }
 
 /**
- * Kid unclaims a chore (returns it to 'open')
+ * Kid unclaims/releases an active task back to open
  */
-export async function unclaimTask(taskId) {
+export async function releaseTask(taskId, kidId) {
   const { data, error } = await supabase
     .from('tasks')
     .update({
@@ -89,6 +90,7 @@ export async function unclaimTask(taskId) {
       claimed_by: null,
     })
     .eq('id', taskId)
+    .eq('claimed_by', kidId)
     .select()
     .single()
 
@@ -97,41 +99,23 @@ export async function unclaimTask(taskId) {
 }
 
 /**
- * Kid marks a claimed chore as completed (pending parent approval)
- */
-export async function completeTask(taskId) {
-  const { data, error } = await supabase
-    .from('tasks')
-    .update({
-      status: 'completed',
-    })
-    .eq('id', taskId)
-    .select()
-    .single()
-
-  if (error) throw error
-  return data
-}
-
-/**
- * Parent approves a completed chore:
- * 1. Updates task status to 'approved'
+ * Parent approves a pending task:
+ * 1. Updates task status to 'completed'
  * 2. Credits points to the kid's profile
  */
 export async function approveTask(taskId, kidId, pointsValue) {
-  // Step 1: Update the task status to 'approved'
-  const { data: taskData, error: taskError } = await supabase
+  // Step 1: Update task status to 'completed'
+  const { data: updatedTask, error: taskError } = await supabase
     .from('tasks')
-    .update({ status: 'approved' })
+    .update({ status: 'completed' })
     .eq('id', taskId)
     .select()
     .single()
 
   if (taskError) throw taskError
 
-  // Step 2: Award points to the kid's profile
+  // Step 2: Increment the kid's points
   if (kidId && pointsValue) {
-    // Fetch kid's current points
     const { data: kidProfile, error: profileFetchError } = await supabase
       .from('profiles')
       .select('points')
@@ -139,27 +123,26 @@ export async function approveTask(taskId, kidId, pointsValue) {
       .maybeSingle()
 
     if (!profileFetchError && kidProfile) {
-      const updatedPoints = (kidProfile.points || 0) + Number(pointsValue)
+      const newPoints = (kidProfile.points || 0) + Number(pointsValue)
       const { error: profileUpdateError } = await supabase
         .from('profiles')
-        .update({ points: updatedPoints })
+        .update({ points: newPoints })
         .eq('id', kidId)
 
       if (profileUpdateError) {
-        console.warn('Could not update kid points directly due to RLS:', profileUpdateError.message)
+        console.warn('Profile points update warning:', profileUpdateError.message)
       }
     }
   }
 
-  return taskData
+  return updatedTask
 }
 
 /**
- * Parent deletes a chore
+ * Parent deletes a task
  */
 export async function deleteTask(taskId) {
   const { error } = await supabase.from('tasks').delete().eq('id', taskId)
   if (error) throw error
   return true
 }
-
