@@ -53,3 +53,4 @@ USING (true);
 -- (Optional) If you have existing unconfirmed users you want to verify instantly:
 -- UPDATE auth.users SET email_confirmed_at = now() WHERE email_confirmed_at IS NULL;
 -- ==============================================================================
+

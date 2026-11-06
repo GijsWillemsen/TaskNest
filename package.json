@@ -6,11 +6,13 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:android": "vite build && cap sync android && cd android && gradlew.bat assembleDebug",
     "icons": "node scripts/generate-icons.js",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@capacitor/android": "^8.6.0",
     "@capacitor/core": "^8.6.0",
     "@supabase/server": "^1.9.2",
     "@supabase/supabase-js": "^2.119.0",
@@ -20,6 +22,7 @@
     "react-router-dom": "^7.18.5"
   },
   "devDependencies": {
+    "@capacitor/assets": "^4.0.0",
     "@capacitor/cli": "^8.6.0",
     "@eslint/js": "^10.0.1",
     "@types/react": "^19.3.0",

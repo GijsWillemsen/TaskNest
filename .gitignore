@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Android / Mobile Builds
+*.apk
+*.aab
+android/.gradle
+android/build
+android/app/build
