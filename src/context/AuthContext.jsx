@@ -1,10 +1,12 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../supabaseClient'
 import { AuthContext } from './auth-context'
+import { getFamilyDetails } from '../services/familyService'
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
+  const [family, setFamily] = useState(null)
   const [loading, setLoading] = useState(true)
 
   const fetchProfile = useCallback(async (userId, fallbackRole) => {
@@ -22,11 +24,17 @@ export function AuthProvider({ children }) {
 
       if (data) {
         setProfile(data)
+        if (data.family_id) {
+          const fam = await getFamilyDetails(data.family_id)
+          setFamily(fam)
+        } else {
+          setFamily(null)
+        }
         return data
       }
 
       // If profile record does not exist yet and we have an authenticated user:
-      const roleToSet = fallbackRole || 'kid'
+      const roleToSet = fallbackRole || 'parent'
       const { data: newProfile, error: upsertError } = await supabase
         .from('profiles')
         .upsert({
@@ -71,6 +79,7 @@ export function AuthProvider({ children }) {
         } else {
           setUser(null)
           setProfile(null)
+          setFamily(null)
         }
       } catch (err) {
         console.error('Auth initialization error:', err)
@@ -93,6 +102,7 @@ export function AuthProvider({ children }) {
         } else {
           setUser(null)
           setProfile(null)
+          setFamily(null)
         }
         setLoading(false)
       }
@@ -114,30 +124,22 @@ export function AuthProvider({ children }) {
         password,
         options: {
           data: {
-            role, // stored in auth.users.raw_user_meta_data
+            role,
           },
         },
       })
 
       if (error) throw error
 
-      // Only attempt client profile upsert if an active session was created
-      // (If email confirmation is ON, session is null and RLS blocks unauthenticated inserts;
-      // the profile will be created automatically upon first login when confirmed)
       if (data?.session && data?.user) {
-        const { error: profileError } = await supabase
+        await supabase
           .from('profiles')
           .upsert({
             id: data.user.id,
             role,
             points: 0,
           })
-
-        if (profileError) {
-          console.warn('Profile creation note:', profileError.message)
-        } else {
-          await fetchProfile(data.user.id, role)
-        }
+        await fetchProfile(data.user.id, role)
       }
 
       return data
@@ -179,6 +181,7 @@ export function AuthProvider({ children }) {
       if (error) throw error
       setUser(null)
       setProfile(null)
+      setFamily(null)
     } finally {
       setLoading(false)
     }
@@ -187,6 +190,8 @@ export function AuthProvider({ children }) {
   const value = {
     user,
     profile,
+    family,
+    familyId: profile?.family_id || null,
     role: profile?.role || user?.user_metadata?.role || null,
     points: profile?.points ?? 0,
     loading,

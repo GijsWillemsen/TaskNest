@@ -7,14 +7,16 @@ import {
   CheckSquare,
   Gift,
   Coins,
+  Users,
 } from 'lucide-react'
 import TaskList from './tasks/TaskList'
 import RewardsList from './rewards/RewardsList'
+import FamilyView from './family/FamilyView'
 import '../styles/auth.css'
 
 export default function Dashboard() {
   const { user, profile, role, points, signOut, refreshProfile } = useAuth()
-  const [activeTab, setActiveTab] = useState('chores') // 'chores', 'rewards'
+  const [activeTab, setActiveTab] = useState('chores') // 'chores', 'rewards', 'family'
 
   const isParent = role === 'parent'
   const isKid = role === 'kid'
@@ -69,14 +71,14 @@ export default function Dashboard() {
           </div>
 
           {/* Navigation Pill Switcher */}
-          <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-surface-elevated)', padding: '4px', borderRadius: '10px' }}>
+          <div style={{ display: 'flex', gap: '0.4rem', background: 'var(--bg-surface-elevated)', padding: '4px', borderRadius: '10px' }}>
             <button
               onClick={() => setActiveTab('chores')}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.4rem',
-                padding: '0.5rem 0.9rem',
+                padding: '0.5rem 0.85rem',
                 borderRadius: '8px',
                 border: 'none',
                 background: activeTab === 'chores' ? 'var(--discord-blurple)' : 'transparent',
@@ -97,7 +99,7 @@ export default function Dashboard() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.4rem',
-                padding: '0.5rem 0.9rem',
+                padding: '0.5rem 0.85rem',
                 borderRadius: '8px',
                 border: 'none',
                 background: activeTab === 'rewards' ? 'var(--discord-blurple)' : 'transparent',
@@ -111,6 +113,27 @@ export default function Dashboard() {
               <Gift size={15} />
               Rewards
             </button>
+
+            <button
+              onClick={() => setActiveTab('family')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '0.5rem 0.85rem',
+                borderRadius: '8px',
+                border: 'none',
+                background: activeTab === 'family' ? 'var(--discord-blurple)' : 'transparent',
+                color: activeTab === 'family' ? '#ffffff' : 'var(--text-muted)',
+                fontWeight: 600,
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <Users size={15} />
+              Family
+            </button>
           </div>
         </section>
 
@@ -123,12 +146,21 @@ export default function Dashboard() {
           />
         )}
 
-        {/* Tab 2: Rewards Store & Request Management */}
+        {/* Tab 2: Rewards Store & Purchase Requests */}
         {activeTab === 'rewards' && (
           <RewardsList
             role={role}
             kidId={user?.id}
             points={points}
+            onPointsRefresh={refreshProfile}
+          />
+        )}
+
+        {/* Tab 3: Family Hub & Leaderboard */}
+        {activeTab === 'family' && (
+          <FamilyView
+            role={role}
+            currentUserId={user?.id}
             onPointsRefresh={refreshProfile}
           />
         )}

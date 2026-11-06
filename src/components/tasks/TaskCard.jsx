@@ -178,8 +178,8 @@ export default function TaskCard({
             </button>
           )}
 
-          {/* Kid: Claim open chore */}
-          {!isParent && task.status === 'open' && (
+          {/* Any family member (Kid or Parent): Claim open chore */}
+          {task.status === 'open' && (
             <button
               onClick={handleClaim}
               className="btn-task-action btn-claim"
@@ -190,8 +190,8 @@ export default function TaskCard({
             </button>
           )}
 
-          {/* Kid: My active claimed chore */}
-          {!isParent && task.status === 'claimed' && isClaimedByMe && (
+          {/* Any family member (Kid or Parent): My active claimed chore */}
+          {task.status === 'claimed' && isClaimedByMe && (
             <>
               <button
                 onClick={handleRelease}
@@ -212,8 +212,8 @@ export default function TaskCard({
             </>
           )}
 
-          {/* Kid: Waiting for approval indicator */}
-          {!isParent && task.status === 'pending_approval' && isClaimedByMe && (
+          {/* Claimant waiting indicator */}
+          {task.status === 'pending_approval' && isClaimedByMe && !isParent && (
             <span className="status-waiting-pill">Under Review ⏳</span>
           )}
 

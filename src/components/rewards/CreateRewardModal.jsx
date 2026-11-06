@@ -11,7 +11,7 @@ const PRESET_REWARDS = [
   { title: 'New Book or Toy 🎁', description: 'Reward trip to choose a new book or toy', cost: 100 },
 ]
 
-export default function CreateRewardModal({ isOpen, onClose, onRewardCreated }) {
+export default function CreateRewardModal({ isOpen, onClose, onRewardCreated, familyId }) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [cost, setCost] = useState(30)
@@ -38,6 +38,7 @@ export default function CreateRewardModal({ isOpen, onClose, onRewardCreated }) 
     setSaving(true)
     try {
       const newReward = await createReward({
+        familyId,
         title,
         description,
         cost,
