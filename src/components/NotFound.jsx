@@ -6,10 +6,6 @@ export default function NotFound() {
   return (
     <div className="auth-page">
       <div className="auth-card" style={{ textAlign: 'center' }}>
-        <div className="auth-logo-badge" style={{ margin: '0 auto 1.25rem' }}>
-          <img src="/logo.png" alt="TaskNest" className="brand-logo-img" />
-        </div>
-
         <h1 style={{ fontSize: '3.5rem', fontWeight: 900, color: 'var(--discord-yellow)', margin: '0 0 0.5rem' }}>
           404
         </h1>

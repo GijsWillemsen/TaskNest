@@ -1,15 +1,11 @@
 import { useState } from 'react'
-import { useTheme } from '../../context/useTheme'
 import {
   Coins,
   CheckCircle2,
-  Clock,
   Hand,
   Trash2,
   Undo2,
-  Sparkles,
   Award,
-  Star,
 } from 'lucide-react'
 import {
   claimTask,
@@ -29,8 +25,6 @@ export default function TaskCard({
   onSuccess,
 }) {
   const [loading, setLoading] = useState(false)
-  const { theme } = useTheme()
-  const isPlayful = theme === 'playful'
 
   const isClaimedByMe = task.claimed_by === currentUserId
   const isClaimedBySibling = task.claimed_by && !isClaimedByMe
@@ -40,7 +34,7 @@ export default function TaskCard({
     try {
       const updated = await claimTask(task.id, currentUserId)
       onTaskUpdated(updated)
-      if (onSuccess) onSuccess(`You claimed "${task.title}"! Good luck!`)
+      if (onSuccess) onSuccess(`You claimed "${task.title}"!`)
     } catch (err) {
       if (onError) onError(err.message || 'Failed to claim task.')
     } finally {
@@ -53,7 +47,7 @@ export default function TaskCard({
     try {
       const updated = await finishTask(task.id, currentUserId)
       onTaskUpdated(updated)
-      if (onSuccess) onSuccess(`Awesome! "${task.title}" sent to parent for approval.`)
+      if (onSuccess) onSuccess(`"${task.title}" marked as done! Waiting for approval.`)
     } catch (err) {
       if (onError) onError(err.message || 'Failed to submit task.')
     } finally {
@@ -66,7 +60,7 @@ export default function TaskCard({
     try {
       const updated = await releaseTask(task.id, currentUserId)
       onTaskUpdated(updated)
-      if (onSuccess) onSuccess(`Released "${task.title}" back to open tasks.`)
+      if (onSuccess) onSuccess(`Released "${task.title}" back to open chores.`)
     } catch (err) {
       if (onError) onError(err.message || 'Failed to release task.')
     } finally {
@@ -101,73 +95,23 @@ export default function TaskCard({
     }
   }
 
-  // Render Discord-styled Status Badge
-  const renderStatusBadge = () => {
-    switch (task.status) {
-      case 'open':
-        return (
-          <span className="task-status-chip status-open">
-            <Sparkles size={12} /> Open
-          </span>
-        )
-      case 'claimed':
-        return (
-          <span className="task-status-chip status-claimed">
-            <Clock size={12} /> In Progress
-          </span>
-        )
-      case 'pending_approval':
-        return (
-          <span className="task-status-chip status-pending_approval">
-            <Clock size={12} /> Needs Approval
-          </span>
-        )
-      case 'completed':
-        return (
-          <span className="task-status-chip status-completed">
-            <CheckCircle2 size={12} /> Completed
-          </span>
-        )
-      default:
-        return null
-    }
-  }
-
   return (
     <div className={`task-card task-card-${task.status}`}>
+      {/* Top row: Title on left, Coin + amount on right */}
       <div className="task-card-top">
-        <div className="task-header-left">
-          {renderStatusBadge()}
-          <h3 className="task-title">{task.title}</h3>
-        </div>
+        <h3 className="task-title">{task.title}</h3>
 
-        <div className="task-points-badge">
-          {isPlayful ? <Star size={15} fill="#eab308" color="#ca8a04" /> : <Coins size={15} />}
-          <span>+{task.points_value} pts</span>
+        <div className="task-points-badge" title={`${task.points_value} points`}>
+          <Coins size={16} />
+          <span>{task.points_value}</span>
         </div>
       </div>
 
       {task.description && <p className="task-description">{task.description}</p>}
 
       {/* Footer & Actions */}
-      <div className="task-card-footer">
-        {/* Left claim status */}
-        <div className="task-claim-info">
-          {task.status === 'open' && (
-            <span className="claim-text-open">Open for anyone in family</span>
-          )}
-          {task.status !== 'open' && (
-            <span className="claim-text-user">
-              {isClaimedByMe
-                ? 'Claimed by you'
-                : isClaimedBySibling
-                ? 'Claimed by sibling'
-                : 'Assigned'}
-            </span>
-          )}
-        </div>
-
-        {/* Right actions */}
+      <div className="task-card-footer" style={{ justifyContent: 'flex-end' }}>
+        {/* Actions */}
         <div className="task-actions-group">
           {/* Parent: Approve pending chore */}
           {isParent && task.status === 'pending_approval' && (
@@ -178,7 +122,7 @@ export default function TaskCard({
               title="Approve and award points"
             >
               <Award size={15} />
-              Approve (+{task.points_value})
+              <span>Approve ({task.points_value})</span>
             </button>
           )}
 
@@ -190,11 +134,11 @@ export default function TaskCard({
               disabled={loading}
             >
               <Hand size={15} />
-              Claim
+              <span>Claim</span>
             </button>
           )}
 
-          {/* Any family member (Kid or Parent): My active claimed chore */}
+          {/* My active claimed chore */}
           {task.status === 'claimed' && isClaimedByMe && (
             <>
               <button
@@ -211,7 +155,7 @@ export default function TaskCard({
                 disabled={loading}
               >
                 <CheckCircle2 size={15} />
-                Mark as Done
+                <span>Mark as Done</span>
               </button>
             </>
           )}
@@ -219,6 +163,13 @@ export default function TaskCard({
           {/* Claimant waiting indicator */}
           {task.status === 'pending_approval' && isClaimedByMe && !isParent && (
             <span className="status-waiting-pill">Under Review ⏳</span>
+          )}
+
+          {/* Sibling claimed indicator */}
+          {task.status === 'claimed' && isClaimedBySibling && (
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)', fontStyle: 'italic' }}>
+              Claimed by family member
+            </span>
           )}
 
           {/* Parent: Delete button */}

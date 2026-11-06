@@ -1,56 +1,60 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { supabase } from '../supabaseClient'
 import { useAuth } from './useAuth'
-import { ThemeContext } from './theme-context'
+import { ThemeContext, THEMES, normalizeTheme } from './theme-context'
 
 export function ThemeProvider({ children }) {
   const { profile, user } = useAuth()
-  
+
   const [localTheme, setLocalTheme] = useState(() => {
-    return localStorage.getItem('tasknest_theme') || 'playful'
+    return normalizeTheme(localStorage.getItem('tasknest_theme'))
   })
 
-  // Derive active theme from profile preference or local override
-  const activeTheme = profile?.theme_preference || localTheme
+  // Normalize profile preference if present, otherwise local
+  const activeTheme = normalizeTheme(profile?.theme_preference || localTheme)
   const userId = user?.id
 
-  // Synchronize document attribute with active theme
+  // Synchronize document data-theme attribute
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', activeTheme)
     localStorage.setItem('tasknest_theme', activeTheme)
   }, [activeTheme])
 
-  const setTheme = useCallback(async (newTheme) => {
-    if (newTheme !== 'playful' && newTheme !== 'modern') return
-    setLocalTheme(newTheme)
-    document.documentElement.setAttribute('data-theme', newTheme)
-    localStorage.setItem('tasknest_theme', newTheme)
+  const setTheme = useCallback(
+    async (newTheme) => {
+      const validTheme = normalizeTheme(newTheme)
+      setLocalTheme(validTheme)
+      document.documentElement.setAttribute('data-theme', validTheme)
+      localStorage.setItem('tasknest_theme', validTheme)
 
-    if (userId) {
-      try {
-        await supabase
-          .from('profiles')
-          .update({ theme_preference: newTheme })
-          .eq('id', userId)
-      } catch (err) {
-        console.error('Failed to persist theme preference:', err)
+      if (userId) {
+        try {
+          await supabase
+            .from('profiles')
+            .update({ theme_preference: validTheme })
+            .eq('id', userId)
+        } catch (err) {
+          console.error('Failed to persist theme preference:', err)
+        }
       }
-    }
-  }, [userId])
+    },
+    [userId]
+  )
 
   const toggleTheme = useCallback(() => {
-    setTheme(activeTheme === 'playful' ? 'modern' : 'playful')
+    const currentIndex = THEMES.findIndex((t) => t.id === activeTheme)
+    const nextIndex = (currentIndex + 1) % THEMES.length
+    setTheme(THEMES[nextIndex].id)
   }, [activeTheme, setTheme])
 
-  const value = useMemo(() => ({
-    theme: activeTheme,
-    setTheme,
-    toggleTheme,
-  }), [activeTheme, setTheme, toggleTheme])
-
-  return (
-    <ThemeContext.Provider value={value}>
-      {children}
-    </ThemeContext.Provider>
+  const value = useMemo(
+    () => ({
+      theme: activeTheme,
+      setTheme,
+      toggleTheme,
+    }),
+    [activeTheme, setTheme, toggleTheme]
   )
+
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
 }

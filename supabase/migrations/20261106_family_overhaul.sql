@@ -32,7 +32,7 @@ CREATE TABLE public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   role TEXT NOT NULL CHECK (role IN ('parent', 'kid')),
   display_name TEXT NOT NULL DEFAULT 'Hero',
-  theme_preference TEXT NOT NULL DEFAULT 'playful' CHECK (theme_preference IN ('playful', 'modern')),
+  theme_preference TEXT NOT NULL DEFAULT 'candy' CHECK (theme_preference IN ('candy', 'arcade', 'sunset', 'forest', 'obsidian', 'playful', 'modern')),
   points INTEGER NOT NULL DEFAULT 0,
   family_id UUID REFERENCES public.families(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ DEFAULT now()
@@ -83,23 +83,50 @@ RETURNS UUID LANGUAGE sql STABLE SECURITY DEFINER AS $$
   SELECT family_id FROM public.profiles WHERE id = user_id LIMIT 1;
 $$;
 
--- 11. Automatic Profile Creation Trigger on Sign-Up
+-- 11. Automatic Profile & Family Creation Trigger on Sign-Up
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
+DECLARE
+  new_family_id UUID := NULL;
+  new_invite_code TEXT := '';
+  chars TEXT := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  i INTEGER;
+  chosen_family_name TEXT;
+  provided_invite_code TEXT;
 BEGIN
+  chosen_family_name := TRIM(COALESCE(new.raw_user_meta_data->>'family_name', ''));
+  provided_invite_code := UPPER(TRIM(COALESCE(new.raw_user_meta_data->>'invite_code', '')));
+
+  -- 1. If parent provided a family name or role is parent:
+  IF (new.raw_user_meta_data->>'role') = 'parent' AND length(chosen_family_name) > 0 THEN
+    new_invite_code := '';
+    FOR i IN 1..6 LOOP
+      new_invite_code := new_invite_code || substr(chars, floor(random() * length(chars) + 1)::integer, 1);
+    END LOOP;
+
+    INSERT INTO public.families (name, invite_code)
+    VALUES (chosen_family_name, new_invite_code)
+    RETURNING id INTO new_family_id;
+  ELSIF length(provided_invite_code) = 6 THEN
+    SELECT id INTO new_family_id FROM public.families WHERE invite_code = provided_invite_code LIMIT 1;
+  END IF;
+
+  -- 2. Create or update profile
   INSERT INTO public.profiles (id, role, display_name, theme_preference, points, family_id)
   VALUES (
     new.id,
     COALESCE(new.raw_user_meta_data->>'role', 'parent'),
-    COALESCE(new.raw_user_meta_data->>'display_name', 'Hero'),
-    COALESCE(new.raw_user_meta_data->>'theme_preference', 'playful'),
+    COALESCE(NULLIF(TRIM(new.raw_user_meta_data->>'display_name'), ''), 'Hero'),
+    COALESCE(NULLIF(TRIM(new.raw_user_meta_data->>'theme_preference'), ''), 'candy'),
     0,
-    NULL
+    new_family_id
   )
   ON CONFLICT (id) DO UPDATE SET
     role = EXCLUDED.role,
     display_name = EXCLUDED.display_name,
-    theme_preference = EXCLUDED.theme_preference;
+    theme_preference = EXCLUDED.theme_preference,
+    family_id = COALESCE(profiles.family_id, EXCLUDED.family_id);
+
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
