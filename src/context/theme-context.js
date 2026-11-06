@@ -5,3 +5,4 @@ export const ThemeContext = createContext({
   setTheme: () => {},
   toggleTheme: () => {},
 })
+
