@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { Coins, Trash2, ShoppingBag, Sparkles } from 'lucide-react'
+import { Coins, Trash2, ShoppingBag, Sparkles, Lock } from 'lucide-react'
 import { deleteReward, requestReward } from '../../services/rewardService'
 
 export default function RewardCard({
   reward,
   isParent,
   kidId,
-  kidPoints,
+  kidPoints = 0,
   familyId,
   onRewardDeleted,
   onRewardRequested,
@@ -15,8 +15,9 @@ export default function RewardCard({
 }) {
   const [submitting, setSubmitting] = useState(false)
 
-  const canAfford = kidPoints >= reward.cost
-  const percentComplete = Math.min(100, Math.round((kidPoints / reward.cost) * 100))
+  const currentPoints = Number(kidPoints) || 0
+  const canAfford = currentPoints >= reward.cost
+  const percentComplete = reward.cost > 0 ? Math.min(100, Math.round((currentPoints / reward.cost) * 100)) : 100
 
   const handleRequestBuy = async () => {
     if (!canAfford) return
@@ -98,7 +99,7 @@ export default function RewardCard({
               <Sparkles size={13} /> Affordable
             </span>
           ) : (
-            <span>Need {reward.cost - kidPoints} more pts</span>
+            <span>🪙 {reward.cost - currentPoints} needed</span>
           )}
         </div>
 
@@ -113,7 +114,7 @@ export default function RewardCard({
                 color: canAfford ? '#ffffff' : 'var(--text-dim)',
               }}
               disabled={!canAfford || submitting}
-              title={canAfford ? 'Send request to parent' : `Need ${reward.cost - kidPoints} more points`}
+              title={canAfford ? 'Send request to parent' : `Need ${reward.cost - currentPoints} more points`}
             >
               {canAfford ? (
                 <>
