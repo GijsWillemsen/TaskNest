@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "deploy": "npm run build && wrangler deploy",
     "build:android": "vite build && cap sync android && cd android && gradlew.bat assembleDebug",
     "icons": "node scripts/generate-icons.js",
     "lint": "eslint .",
