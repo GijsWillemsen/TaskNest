@@ -11,12 +11,15 @@ DROP TABLE IF EXISTS public.rewards CASCADE;
 DROP TABLE IF EXISTS public.profiles CASCADE;
 DROP TABLE IF EXISTS public.families CASCADE;
 
--- 2. Drop existing triggers & functions
+-- 2. Wipe old auth users (clears test accounts so you can re-register the same emails)
+DELETE FROM auth.users;
+
+-- 3. Drop existing triggers & functions
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
 DROP FUNCTION IF EXISTS public.get_user_family_id(UUID) CASCADE;
 
--- 3. Create Families Table
+-- 4. Create Families Table
 CREATE TABLE public.families (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
@@ -24,7 +27,7 @@ CREATE TABLE public.families (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- 4. Create Profiles Table (links auth.users to families)
+-- 5. Create Profiles Table (links auth.users to families)
 CREATE TABLE public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   role TEXT NOT NULL CHECK (role IN ('parent', 'kid')),
@@ -33,7 +36,7 @@ CREATE TABLE public.profiles (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- 5. Create Tasks Table (isolated by family_id)
+-- 6. Create Tasks Table (isolated by family_id)
 CREATE TABLE public.tasks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   family_id UUID NOT NULL REFERENCES public.families(id) ON DELETE CASCADE,
@@ -45,7 +48,7 @@ CREATE TABLE public.tasks (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- 6. Create Rewards Table (isolated by family_id)
+-- 7. Create Rewards Table (isolated by family_id)
 CREATE TABLE public.rewards (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   family_id UUID NOT NULL REFERENCES public.families(id) ON DELETE CASCADE,
@@ -55,7 +58,7 @@ CREATE TABLE public.rewards (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- 7. Create Reward Requests Table (isolated by family_id)
+-- 8. Create Reward Requests Table (isolated by family_id)
 CREATE TABLE public.reward_requests (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   family_id UUID NOT NULL REFERENCES public.families(id) ON DELETE CASCADE,
@@ -65,20 +68,20 @@ CREATE TABLE public.reward_requests (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- 8. Enable Row-Level Security
+-- 9. Enable Row-Level Security
 ALTER TABLE public.families ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tasks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.rewards ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reward_requests ENABLE ROW LEVEL SECURITY;
 
--- 9. Helper function to get current user's family_id
+-- 10. Helper function to get current user's family_id
 CREATE OR REPLACE FUNCTION public.get_user_family_id(user_id UUID)
 RETURNS UUID LANGUAGE sql STABLE SECURITY DEFINER AS $$
   SELECT family_id FROM public.profiles WHERE id = user_id LIMIT 1;
 $$;
 
--- 10. Automatic Profile Creation Trigger on Sign-Up
+-- 11. Automatic Profile Creation Trigger on Sign-Up
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 BEGIN
@@ -98,7 +101,7 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
--- 11. Row-Level Security Policies
+-- 12. Row-Level Security Policies
 
 -- Families: Authenticated users can read (for invite codes & family details), insert to create, update own
 CREATE POLICY "Allow authenticated read families"
@@ -194,3 +197,4 @@ CREATE POLICY "Allow family delete reward_requests"
 ON public.reward_requests FOR DELETE
 TO authenticated
 USING (family_id = public.get_user_family_id(auth.uid()));
+
