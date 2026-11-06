@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/useAuth'
+import { useTheme } from '../context/useTheme'
 import { getFamilyMembers } from '../services/familyService'
 import {
   User,
@@ -10,16 +11,23 @@ import {
   Coins,
   Shield,
   KeyRound,
+  Palette,
+  Gamepad2,
+  Zap,
+  Star,
+  CheckCircle2,
 } from 'lucide-react'
 import '../styles/auth.css'
 
 export default function SettingsPage() {
-  const { user, profile, family, familyId, role, points, signOut } = useAuth()
+  const { user, family, familyId, role, points, displayName, signOut } = useAuth()
+  const { theme, setTheme } = useTheme()
   const [copied, setCopied] = useState(false)
   const [members, setMembers] = useState([])
   const [loadingMembers, setLoadingMembers] = useState(false)
 
   const isParent = role === 'parent'
+  const isPlayful = theme === 'playful'
 
   useEffect(() => {
     let isMounted = true
@@ -60,13 +68,14 @@ export default function SettingsPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', maxWidth: '780px', margin: '0 auto' }}>
+      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
         <div>
           <h1 style={{ margin: '0 0 0.25rem 0', fontSize: '1.6rem', fontWeight: 700, color: 'var(--text-pure)' }}>
-            Settings & Account
+            Settings & Preferences
           </h1>
           <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--text-muted)' }}>
-            Manage your account and family membership
+            Customize your style, manage account, and invite family
           </p>
         </div>
 
@@ -74,26 +83,39 @@ export default function SettingsPage() {
           onClick={signOut}
           className="signout-btn"
           style={{ padding: '0.55rem 1rem' }}
-          title="Sign out"
+          title="Sign out of TaskNest"
         >
           <LogOut size={16} />
           <span>Sign Out</span>
         </button>
       </div>
 
-      {/* Account Info Card */}
-      <div className="placeholder-card" style={{ padding: '1.5rem' }}>
+      {/* User Profile Card */}
+      <div className="placeholder-card settings-card" style={{ padding: '1.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
           <div className="placeholder-icon tasks" style={{ background: 'rgba(88, 101, 242, 0.15)', color: 'var(--discord-blurple)' }}>
             <User size={22} />
           </div>
           <div>
-            <h2 style={{ fontSize: '1.15rem' }}>User Profile</h2>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Your authenticated credentials</span>
+            <h2 style={{ fontSize: '1.15rem', margin: 0 }}>
+              {displayName || 'User Profile'}
+            </h2>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+              Your account details and live balance
+            </span>
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '1.25rem' }}>
+          <div>
+            <span style={{ display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-dim)', fontWeight: 600, marginBottom: '0.3rem' }}>
+              Display Name
+            </span>
+            <span style={{ fontSize: '1rem', color: 'var(--text-pure)', fontWeight: 600 }}>
+              {displayName}
+            </span>
+          </div>
+
           <div>
             <span style={{ display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-dim)', fontWeight: 600, marginBottom: '0.3rem' }}>
               Email Address
@@ -109,39 +131,141 @@ export default function SettingsPage() {
             </span>
             <span className={`role-badge ${role || 'kid'}`}>
               <Shield size={13} />
-              {isParent ? 'Parent / Administrator' : 'Kid / Contributor'}
+              {isParent ? 'Parent' : 'Kid'}
             </span>
           </div>
 
           <div>
             <span style={{ display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-dim)', fontWeight: 600, marginBottom: '0.3rem' }}>
-              Available Balance
+              Live Points
             </span>
             <div className="points-pill" style={{ display: 'inline-flex', padding: '0.35rem 0.85rem', fontSize: '0.95rem' }}>
-              <Coins size={16} color="var(--discord-yellow)" />
+              {isPlayful ? (
+                <Star size={16} fill="#eab308" color="#ca8a04" />
+              ) : (
+                <Coins size={16} color="var(--discord-yellow)" />
+              )}
               <span>{points} pts</span>
             </div>
-          </div>
-
-          <div>
-            <span style={{ display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-dim)', fontWeight: 600, marginBottom: '0.3rem' }}>
-              Account UUID
-            </span>
-            <code style={{ fontSize: '0.8rem', color: 'var(--text-muted)', background: 'var(--bg-surface-elevated)', padding: '0.2rem 0.45rem', borderRadius: '4px' }}>
-              {profile?.id || user?.id || 'N/A'}
-            </code>
           </div>
         </div>
       </div>
 
+      {/* Dynamic Theme Engine Toggle Card */}
+      <div className="placeholder-card settings-card" style={{ padding: '1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+          <div className="placeholder-icon" style={{ background: 'rgba(124, 58, 237, 0.15)', color: 'var(--discord-blurple)' }}>
+            <Palette size={22} />
+          </div>
+          <div>
+            <h2 style={{ fontSize: '1.15rem', margin: 0 }}>Theme & Visual Style</h2>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+              Switch instantly between Playful and Modern themes
+            </span>
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+          {/* Playful Theme Toggle */}
+          <button
+            type="button"
+            onClick={() => setTheme('playful')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.85rem',
+              padding: '1rem',
+              borderRadius: '16px',
+              border: theme === 'playful' ? '2.5px solid #581c87' : '1px solid var(--border-subtle)',
+              boxShadow: theme === 'playful' ? '0 5px 0 #581c87' : 'none',
+              background: theme === 'playful' ? 'rgba(124, 58, 237, 0.12)' : 'var(--bg-surface-elevated)',
+              cursor: 'pointer',
+              textAlign: 'left',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <div
+              style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '12px',
+                background: '#e0f2fe',
+                border: '2px solid #581c87',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#7c3aed',
+                flexShrink: 0,
+              }}
+            >
+              <Gamepad2 size={22} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <strong style={{ color: 'var(--text-pure)', fontSize: '0.98rem' }}>Playful 🎮</strong>
+                {theme === 'playful' && <CheckCircle2 size={16} color="var(--discord-blurple)" />}
+              </div>
+              <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                Bubbly sky-blue, 3D purple borders, yellow star points.
+              </p>
+            </div>
+          </button>
+
+          {/* Modern Theme Toggle */}
+          <button
+            type="button"
+            onClick={() => setTheme('modern')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.85rem',
+              padding: '1rem',
+              borderRadius: '16px',
+              border: theme === 'modern' ? '2.5px solid #5865f2' : '1px solid var(--border-subtle)',
+              boxShadow: theme === 'modern' ? '0 4px 14px rgba(88, 101, 242, 0.35)' : 'none',
+              background: theme === 'modern' ? 'rgba(88, 101, 242, 0.12)' : 'var(--bg-surface-elevated)',
+              cursor: 'pointer',
+              textAlign: 'left',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <div
+              style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '12px',
+                background: '#12141d',
+                border: '1.5px solid #5865f2',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#5865f2',
+                flexShrink: 0,
+              }}
+            >
+              <Zap size={22} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <strong style={{ color: 'var(--text-pure)', fontSize: '0.98rem' }}>Modern ⚡</strong>
+                {theme === 'modern' && <CheckCircle2 size={16} color="var(--discord-blurple)" />}
+              </div>
+              <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                Sleek dark monochrome with neon Discord accents.
+              </p>
+            </div>
+          </button>
+        </div>
+      </div>
+
       {/* Family & Invite Code Card */}
-      <div className="placeholder-card" style={{ padding: '1.5rem' }}>
+      <div className="placeholder-card settings-card" style={{ padding: '1.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
           <div className="placeholder-icon family" style={{ background: 'rgba(254, 231, 92, 0.15)', color: 'var(--discord-yellow)' }}>
             <Users size={22} />
           </div>
           <div>
-            <h2 style={{ fontSize: '1.15rem' }}>
+            <h2 style={{ fontSize: '1.15rem', margin: 0 }}>
               {family?.name || 'Family Nest'}
             </h2>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
@@ -152,10 +276,8 @@ export default function SettingsPage() {
 
         {family?.invite_code ? (
           <div
+            className="dashed-empty-container"
             style={{
-              background: 'var(--bg-deep)',
-              border: '1.5px dashed var(--discord-blurple)',
-              borderRadius: 'var(--radius-md)',
               padding: '1.25rem',
               display: 'flex',
               alignItems: 'center',
@@ -171,7 +293,7 @@ export default function SettingsPage() {
               </span>
               <div
                 style={{
-                  fontSize: '1.75rem',
+                  fontSize: '1.85rem',
                   fontWeight: 900,
                   letterSpacing: '0.2em',
                   color: 'var(--text-pure)',
@@ -181,21 +303,21 @@ export default function SettingsPage() {
                 {family.invite_code}
               </div>
               <p style={{ margin: '0.35rem 0 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                Kids and co-parents enter this code when registering to link directly into your family.
+                Share this code with family members to link them to this Nest.
               </p>
             </div>
 
             <button
               onClick={handleCopyCode}
               type="button"
-              className="auth-submit-btn"
+              className="auth-submit-btn action-btn-primary"
               style={{
                 width: 'auto',
                 margin: 0,
                 padding: '0.65rem 1.25rem',
                 fontSize: '0.88rem',
                 background: copied ? 'var(--discord-green)' : 'var(--discord-blurple)',
-                color: copied ? '#090a0f' : '#ffffff',
+                color: copied ? '#ffffff' : '#ffffff',
               }}
             >
               {copied ? (
@@ -211,7 +333,7 @@ export default function SettingsPage() {
           </div>
         ) : (
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>
-            No family linked yet. Use the setup prompt above to create or join a family.
+            No family linked yet. Use the setup prompt on the dashboard to create or join a family.
           </p>
         )}
 
@@ -238,20 +360,29 @@ export default function SettingsPage() {
                       padding: '0.75rem 1rem',
                       background: 'var(--bg-surface-elevated)',
                       border: '1px solid var(--border-subtle)',
-                      borderRadius: '8px',
+                      borderRadius: '12px',
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                       <span className={`role-badge ${m.role}`}>
                         {m.role === 'parent' ? 'Parent' : 'Kid'}
                       </span>
-                      <span style={{ fontSize: '0.9rem', color: 'var(--text-pure)' }}>
-                        {m.id === user?.id ? 'You' : `Member (${m.id.slice(0, 8)}...)`}
+                      <span style={{ fontSize: '0.92rem', color: 'var(--text-pure)', fontWeight: 600 }}>
+                        {m.display_name || (m.id === user?.id ? 'You' : `Member (${m.id.slice(0, 6)})`)}
+                        {m.id === user?.id && (
+                          <span style={{ fontSize: '0.75rem', color: 'var(--discord-blurple)', marginLeft: '0.4rem' }}>
+                            (You)
+                          </span>
+                        )}
                       </span>
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--discord-yellow)', fontWeight: 700, fontSize: '0.9rem' }}>
-                      <Coins size={15} />
+                      {isPlayful ? (
+                        <Star size={15} fill="#eab308" color="#ca8a04" />
+                      ) : (
+                        <Coins size={15} color="var(--discord-yellow)" />
+                      )}
                       <span>{m.points} pts</span>
                     </div>
                   </div>

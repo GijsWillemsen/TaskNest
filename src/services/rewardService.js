@@ -82,7 +82,7 @@ export async function getRewardRequests(familyId) {
         status,
         created_at,
         rewards:reward_id (id, title, description, cost),
-        profiles:kid_id (id, role, points)
+        profiles:kid_id (id, role, points, display_name)
       `)
       .order('created_at', { ascending: false })
 

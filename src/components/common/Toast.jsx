@@ -74,3 +74,4 @@ export default function Toast({ message, type = 'error', onClose, duration = 500
     </div>
   )
 }
+

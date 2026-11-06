@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTheme } from '../../context/useTheme'
 import {
   Coins,
   CheckCircle2,
@@ -8,6 +9,7 @@ import {
   Undo2,
   Sparkles,
   Award,
+  Star,
 } from 'lucide-react'
 import {
   claimTask,
@@ -27,6 +29,8 @@ export default function TaskCard({
   onSuccess,
 }) {
   const [loading, setLoading] = useState(false)
+  const { theme } = useTheme()
+  const isPlayful = theme === 'playful'
 
   const isClaimedByMe = task.claimed_by === currentUserId
   const isClaimedBySibling = task.claimed_by && !isClaimedByMe
@@ -138,7 +142,7 @@ export default function TaskCard({
         </div>
 
         <div className="task-points-badge">
-          <Coins size={15} />
+          {isPlayful ? <Star size={15} fill="#eab308" color="#ca8a04" /> : <Coins size={15} />}
           <span>+{task.points_value} pts</span>
         </div>
       </div>
@@ -150,7 +154,7 @@ export default function TaskCard({
         {/* Left claim status */}
         <div className="task-claim-info">
           {task.status === 'open' && (
-            <span className="claim-text-open">Open for any kid</span>
+            <span className="claim-text-open">Open for anyone in family</span>
           )}
           {task.status !== 'open' && (
             <span className="claim-text-user">

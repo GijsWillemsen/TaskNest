@@ -1,12 +1,16 @@
 import { Outlet } from 'react-router-dom'
 import { useAuth } from '../../context/useAuth'
+import { useTheme } from '../../context/useTheme'
 import BottomNavBar from '../navigation/BottomNavBar'
 import FamilySetupPrompt from '../family/FamilySetupPrompt'
-import { Coins, Users } from 'lucide-react'
+import { Coins, Star, Users } from 'lucide-react'
 import '../../styles/auth.css'
 
 export default function AppLayout() {
-  const { user, family, familyId, role, points, refreshProfile } = useAuth()
+  const { user, family, familyId, role, points, displayName, refreshProfile } = useAuth()
+  const { theme } = useTheme()
+
+  const isPlayful = theme === 'playful'
 
   return (
     <div className="dashboard-page" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -22,12 +26,12 @@ export default function AppLayout() {
             <span
               style={{
                 fontSize: '0.78rem',
-                fontWeight: 600,
+                fontWeight: 700,
                 color: 'var(--discord-blurple)',
-                backgroundColor: 'rgba(88, 101, 242, 0.12)',
-                border: '1px solid rgba(88, 101, 242, 0.3)',
+                backgroundColor: isPlayful ? 'rgba(124, 58, 237, 0.12)' : 'rgba(88, 101, 242, 0.12)',
+                border: isPlayful ? '1.5px solid #7c3aed' : '1px solid rgba(88, 101, 242, 0.3)',
                 padding: '0.2rem 0.55rem',
-                borderRadius: '6px',
+                borderRadius: '8px',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.3rem',
@@ -41,13 +45,30 @@ export default function AppLayout() {
         </div>
 
         <div className="nav-actions">
+          {displayName && (
+            <span
+              style={{
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                color: 'var(--text-main)',
+                marginRight: '0.25rem',
+              }}
+            >
+              {displayName}
+            </span>
+          )}
+
           {/* Points Pill */}
           <div
             className="points-pill"
             style={{ padding: '0.35rem 0.8rem', fontSize: '0.9rem' }}
             title="Your current points"
           >
-            <Coins size={16} color="var(--discord-yellow)" />
+            {isPlayful ? (
+              <Star size={16} fill="#eab308" color="#ca8a04" />
+            ) : (
+              <Coins size={16} color="var(--discord-yellow)" />
+            )}
             <span>{points} pts</span>
           </div>
         </div>

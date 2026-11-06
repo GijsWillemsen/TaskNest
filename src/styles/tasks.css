@@ -496,6 +496,74 @@
   margin-top: 0.75rem;
 }
 
+/* =========================================================
+   PLAYFUL THEME OVERRIDES (Tasks 3D Chunky Styling)
+   ========================================================= */
+
+[data-theme='playful'] .task-card {
+  border: 2.5px solid #581c87 !important;
+  box-shadow: 0 5px 0 #581c87 !important;
+  border-radius: 20px !important;
+  background-color: #ffffff !important;
+}
+
+[data-theme='playful'] .task-points-badge {
+  background: #fef08a !important;
+  color: #854d0e !important;
+  border: 2px solid #ca8a04 !important;
+  box-shadow: 0 3px 0 #ca8a04 !important;
+  border-radius: 9999px !important;
+  font-weight: 800 !important;
+}
+
+[data-theme='playful'] .btn-task-action,
+[data-theme='playful'] .btn-create-chore {
+  border-radius: 14px !important;
+  font-weight: 700 !important;
+}
+
+[data-theme='playful'] .btn-claim {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border: 2px solid #4c1d95 !important;
+  box-shadow: 0 4px 0 #4c1d95 !important;
+}
+
+[data-theme='playful'] .btn-claim:active {
+  transform: translateY(3px) !important;
+  box-shadow: 0 1px 0 #4c1d95 !important;
+}
+
+[data-theme='playful'] .btn-finish {
+  background: #16a34a !important;
+  color: #ffffff !important;
+  border: 2px solid #14532d !important;
+  box-shadow: 0 4px 0 #14532d !important;
+}
+
+[data-theme='playful'] .btn-approve {
+  background: #ca8a04 !important;
+  color: #ffffff !important;
+  border: 2px solid #854d0e !important;
+  box-shadow: 0 4px 0 #854d0e !important;
+}
+
+[data-theme='playful'] .empty-state-box {
+  border: 3px dashed #7c3aed !important;
+  background: rgba(255, 255, 255, 0.75) !important;
+  border-radius: 22px !important;
+  box-shadow: 0 4px 0 rgba(124, 58, 237, 0.12) !important;
+}
+
+[data-theme='playful'] .filter-tab.active {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border: 2px solid #4c1d95 !important;
+  box-shadow: 0 3px 0 #4c1d95 !important;
+  border-radius: 12px !important;
+}
+
+
 .section-loading {
   display: flex;
   flex-direction: column;
