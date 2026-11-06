@@ -31,6 +31,8 @@ CREATE TABLE public.families (
 CREATE TABLE public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   role TEXT NOT NULL CHECK (role IN ('parent', 'kid')),
+  display_name TEXT NOT NULL DEFAULT 'Hero',
+  theme_preference TEXT NOT NULL DEFAULT 'playful' CHECK (theme_preference IN ('playful', 'modern')),
   points INTEGER NOT NULL DEFAULT 0,
   family_id UUID REFERENCES public.families(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ DEFAULT now()
@@ -85,14 +87,19 @@ $$;
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 BEGIN
-  INSERT INTO public.profiles (id, role, points, family_id)
+  INSERT INTO public.profiles (id, role, display_name, theme_preference, points, family_id)
   VALUES (
     new.id,
     COALESCE(new.raw_user_meta_data->>'role', 'parent'),
+    COALESCE(new.raw_user_meta_data->>'display_name', 'Hero'),
+    COALESCE(new.raw_user_meta_data->>'theme_preference', 'playful'),
     0,
     NULL
   )
-  ON CONFLICT (id) DO NOTHING;
+  ON CONFLICT (id) DO UPDATE SET
+    role = EXCLUDED.role,
+    display_name = EXCLUDED.display_name,
+    theme_preference = EXCLUDED.theme_preference;
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

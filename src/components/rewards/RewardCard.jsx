@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Coins, Trash2, Lock, ShoppingBag, Sparkles } from 'lucide-react'
+import { useTheme } from '../../context/useTheme'
+import { Coins, Trash2, Lock, ShoppingBag, Sparkles, Star } from 'lucide-react'
 import { deleteReward, requestReward } from '../../services/rewardService'
 
 export default function RewardCard({
@@ -14,6 +15,8 @@ export default function RewardCard({
   onSuccess,
 }) {
   const [submitting, setSubmitting] = useState(false)
+  const { theme } = useTheme()
+  const isPlayful = theme === 'playful'
 
   const canAfford = kidPoints >= reward.cost
   const percentComplete = Math.min(100, Math.round((kidPoints / reward.cost) * 100))
@@ -65,7 +68,7 @@ export default function RewardCard({
         </div>
 
         <div className="reward-cost-badge">
-          <Coins size={15} />
+          {isPlayful ? <Star size={15} fill="#eab308" color="#ca8a04" /> : <Coins size={15} />}
           <span>{reward.cost} pts</span>
         </div>
       </div>

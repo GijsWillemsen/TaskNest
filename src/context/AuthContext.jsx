@@ -35,11 +35,15 @@ export function AuthProvider({ children }) {
 
       // If profile record does not exist yet and we have an authenticated user:
       const roleToSet = fallbackRole || 'parent'
+      const nameToSet = 'Hero'
+      const themeToSet = 'playful'
       const { data: newProfile, error: upsertError } = await supabase
         .from('profiles')
         .upsert({
           id: userId,
           role: roleToSet,
+          display_name: nameToSet,
+          theme_preference: themeToSet,
           points: 0,
         })
         .select()
@@ -114,9 +118,11 @@ export function AuthProvider({ children }) {
     }
   }, [fetchProfile])
 
-  const signUp = async ({ email, password, role }) => {
+  const signUp = async ({ email, password, role, displayName, themePreference }) => {
     setLoading(true)
     const cleanEmail = email.trim().toLowerCase()
+    const chosenName = displayName?.trim() || 'Hero'
+    const chosenTheme = themePreference || 'playful'
 
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -125,6 +131,8 @@ export function AuthProvider({ children }) {
         options: {
           data: {
             role,
+            display_name: chosenName,
+            theme_preference: chosenTheme,
           },
         },
       })
@@ -137,6 +145,8 @@ export function AuthProvider({ children }) {
           .upsert({
             id: data.user.id,
             role,
+            display_name: chosenName,
+            theme_preference: chosenTheme,
             points: 0,
           })
         await fetchProfile(data.user.id, role)
@@ -193,6 +203,8 @@ export function AuthProvider({ children }) {
     family,
     familyId: profile?.family_id || null,
     role: profile?.role || user?.user_metadata?.role || null,
+    displayName: profile?.display_name || user?.user_metadata?.display_name || 'Hero',
+    themePreference: profile?.theme_preference || user?.user_metadata?.theme_preference || 'playful',
     points: profile?.points ?? 0,
     loading,
     signUp,

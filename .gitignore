@@ -29,3 +29,6 @@ dist-ssr
 android/.gradle
 android/build
 android/app/build
+
+# Supabase CLI temp files
+supabase/.temp/

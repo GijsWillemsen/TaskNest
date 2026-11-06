@@ -641,3 +641,179 @@
   color: var(--text-muted);
   cursor: default;
 }
+
+/* =========================================================
+   PLAYFUL THEME OVERRIDES (Bubbly Sky Blue + 3D Purple Depth)
+   ========================================================= */
+
+[data-theme='playful'] .auth-page {
+  background: radial-gradient(circle at 50% 15%, rgba(124, 58, 237, 0.15) 0%, rgba(219, 234, 254, 0.98) 75%);
+}
+
+[data-theme='playful'] .auth-card,
+[data-theme='playful'] .welcome-banner,
+[data-theme='playful'] .task-card,
+[data-theme='playful'] .reward-card,
+[data-theme='playful'] .settings-card,
+[data-theme='playful'] .modal-content,
+[data-theme='playful'] .placeholder-card {
+  border: 2.5px solid #581c87;
+  box-shadow: 0 5px 0 #581c87;
+  border-radius: 22px;
+  background-color: #ffffff;
+}
+
+[data-theme='playful'] .auth-submit-btn,
+[data-theme='playful'] .create-task-btn,
+[data-theme='playful'] .action-btn-primary {
+  background: #7c3aed;
+  color: #ffffff;
+  border: 2px solid #4c1d95;
+  box-shadow: 0 4px 0 #4c1d95;
+  border-radius: 16px;
+  font-weight: 700;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+[data-theme='playful'] .auth-submit-btn:hover:not(:disabled),
+[data-theme='playful'] .create-task-btn:hover:not(:disabled),
+[data-theme='playful'] .action-btn-primary:hover:not(:disabled) {
+  background: #6d28d9;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 #4c1d95;
+}
+
+[data-theme='playful'] .auth-submit-btn:active:not(:disabled),
+[data-theme='playful'] .create-task-btn:active:not(:disabled),
+[data-theme='playful'] .action-btn-primary:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #4c1d95;
+}
+
+[data-theme='playful'] .input-field {
+  background: #ffffff;
+  color: #1e1b4b;
+  border: 2px solid #7c3aed;
+  border-radius: 14px;
+}
+
+[data-theme='playful'] .input-field:focus {
+  border-color: #581c87;
+  box-shadow: 0 3px 0 #581c87;
+}
+
+[data-theme='playful'] .input-field::placeholder {
+  color: #8b5cf6;
+  opacity: 0.65;
+}
+
+[data-theme='playful'] .points-pill {
+  background: #fef08a;
+  border: 2px solid #ca8a04;
+  box-shadow: 0 3.5px 0 #ca8a04;
+  color: #854d0e;
+  border-radius: 9999px;
+}
+
+[data-theme='playful'] .empty-state,
+[data-theme='playful'] .dashed-empty-container {
+  border: 3px dashed #7c3aed !important;
+  background: rgba(255, 255, 255, 0.65) !important;
+  border-radius: 22px !important;
+}
+
+[data-theme='playful'] .dashboard-nav {
+  background: rgba(255, 255, 255, 0.95);
+  border-bottom: 2.5px solid #581c87;
+  box-shadow: 0 3px 0 rgba(88, 28, 135, 0.08);
+}
+
+/* Base Bottom Navigation Bar */
+.bottom-nav-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background-color: rgba(18, 20, 29, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  z-index: 50;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  text-decoration: none;
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 6px 18px;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.nav-item.active {
+  color: var(--discord-blurple);
+  font-weight: 700;
+}
+
+.nav-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.nav-item.active .nav-item-icon {
+  transform: scale(1.12);
+  filter: drop-shadow(0 0 8px var(--discord-blurple-glow));
+}
+
+.nav-item-active-bar {
+  position: absolute;
+  top: 0;
+  width: 28px;
+  height: 2.5px;
+  background-color: var(--discord-blurple);
+  border-radius: 2px;
+  box-shadow: 0 0 8px var(--discord-blurple-glow);
+}
+
+[data-theme='playful'] .bottom-nav-bar {
+  background: #ffffff;
+  border: 2.5px solid #581c87;
+  box-shadow: 0 5px 0 #581c87;
+  border-radius: 24px;
+  left: 14px;
+  right: 14px;
+  bottom: 12px;
+  height: 62px;
+}
+
+[data-theme='playful'] .nav-item {
+  color: #581c87;
+  font-weight: 600;
+}
+
+[data-theme='playful'] .nav-item.active {
+  background: rgba(124, 58, 237, 0.12);
+  color: #7c3aed;
+  border-radius: 16px;
+  font-weight: 800;
+}
+
+[data-theme='playful'] .nav-item-active-bar {
+  display: none;
+}
+
+
