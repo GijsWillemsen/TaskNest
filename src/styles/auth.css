@@ -402,9 +402,7 @@
 }
 
 .dashboard-nav {
-  background: rgba(18, 20, 29, 0.85);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: var(--bg-surface);
   border-bottom: 1px solid var(--border-subtle);
   padding: 0.85rem 1.5rem;
   display: flex;
@@ -413,6 +411,39 @@
   position: sticky;
   top: 0;
   z-index: 40;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+[data-theme='candy'] .dashboard-nav,
+[data-theme='playful'] .dashboard-nav {
+  background: #ffffff !important;
+  border-bottom: 2.5px solid #581c87 !important;
+  box-shadow: 0 3px 0 rgba(88, 28, 135, 0.08) !important;
+}
+
+[data-theme='arcade'] .dashboard-nav {
+  background: #131b2e !important;
+  border-bottom: 2px solid #00f2fe !important;
+  box-shadow: 0 3px 14px rgba(0, 242, 254, 0.12) !important;
+}
+
+[data-theme='sunset'] .dashboard-nav {
+  background: #261642 !important;
+  border-bottom: 2px solid #f43f5e !important;
+  box-shadow: 0 3px 14px rgba(244, 63, 94, 0.15) !important;
+}
+
+[data-theme='forest'] .dashboard-nav {
+  background: #142820 !important;
+  border-bottom: 1.5px solid #2d5a48 !important;
+}
+
+[data-theme='obsidian'] .dashboard-nav,
+[data-theme='modern'] .dashboard-nav {
+  background: #141416 !important;
+  border-bottom: 1px solid #27272a !important;
 }
 
 .brand-wrapper {
@@ -722,12 +753,6 @@
   border-radius: 22px !important;
 }
 
-[data-theme='playful'] .dashboard-nav {
-  background: rgba(255, 255, 255, 0.95);
-  border-bottom: 2.5px solid #581c87;
-  box-shadow: 0 3px 0 rgba(88, 28, 135, 0.08);
-}
-
 /* Base Bottom Navigation Bar */
 .bottom-nav-bar {
   position: fixed;
@@ -745,6 +770,34 @@
   z-index: 50;
   padding-bottom: env(safe-area-inset-bottom, 0px);
   box-sizing: border-box;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+[data-theme='candy'] .bottom-nav-bar,
+[data-theme='playful'] .bottom-nav-bar {
+  background: #ffffff !important;
+  border-top: 2.5px solid #581c87 !important;
+}
+
+[data-theme='arcade'] .bottom-nav-bar {
+  background: #131b2e !important;
+  border-top: 2px solid #00f2fe !important;
+}
+
+[data-theme='sunset'] .bottom-nav-bar {
+  background: #261642 !important;
+  border-top: 2px solid #f43f5e !important;
+}
+
+[data-theme='forest'] .bottom-nav-bar {
+  background: #142820 !important;
+  border-top: 1.5px solid #2d5a48 !important;
+}
+
+[data-theme='obsidian'] .bottom-nav-bar,
+[data-theme='modern'] .bottom-nav-bar {
+  background: #141416 !important;
+  border-top: 1px solid #27272a !important;
 }
 
 .nav-item {
