@@ -162,3 +162,4 @@ export async function deleteTask(taskId) {
   if (error) throw error
   return true
 }
+
