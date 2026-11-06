@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   Coins,
-  CheckCircle2,
+  Check,
   Hand,
   Trash2,
   Undo2,
@@ -126,36 +126,50 @@ export default function TaskCard({
             </button>
           )}
 
-          {/* Any family member (Kid or Parent): Claim open chore */}
+          {/* Open chore: Claim (Hand icon) or Finish directly (Check mark) */}
           {task.status === 'open' && (
-            <button
-              onClick={handleClaim}
-              className="btn-task-action btn-claim"
-              disabled={loading}
-            >
-              <Hand size={15} />
-              <span>Claim</span>
-            </button>
+            <>
+              <button
+                onClick={handleClaim}
+                className="btn-task-action btn-claim btn-icon-action"
+                disabled={loading}
+                title="Claim chore"
+                aria-label="Claim chore"
+              >
+                <Hand size={16} />
+              </button>
+              <button
+                onClick={handleFinish}
+                className="btn-task-action btn-complete btn-icon-action"
+                disabled={loading}
+                title="Mark chore as finished"
+                aria-label="Mark chore as finished"
+              >
+                <Check size={18} strokeWidth={2.6} />
+              </button>
+            </>
           )}
 
-          {/* My active claimed chore */}
+          {/* My active claimed chore: Release (Undo) or Finish (Check mark) */}
           {task.status === 'claimed' && isClaimedByMe && (
             <>
               <button
                 onClick={handleRelease}
-                className="btn-task-action btn-unclaim"
+                className="btn-task-action btn-unclaim btn-icon-action"
                 title="Release chore back to open"
+                aria-label="Release chore back to open"
                 disabled={loading}
               >
-                <Undo2 size={14} />
+                <Undo2 size={15} />
               </button>
               <button
                 onClick={handleFinish}
-                className="btn-task-action btn-complete"
+                className="btn-task-action btn-complete btn-icon-action"
                 disabled={loading}
+                title="Mark chore as finished"
+                aria-label="Mark chore as finished"
               >
-                <CheckCircle2 size={15} />
-                <span>Mark as Done</span>
+                <Check size={18} strokeWidth={2.6} />
               </button>
             </>
           )}

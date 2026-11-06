@@ -117,7 +117,7 @@ export default function RewardRequestCard({
 
         <div className="reward-cost-badge">
           <Coins size={15} />
-          <span>{reward.cost} pts</span>
+          <span>{reward.cost}</span>
         </div>
       </div>
 
@@ -125,7 +125,7 @@ export default function RewardRequestCard({
         <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
           {isParent ? (
             <span>
-              Kid account: {request.kid_id?.slice(0, 8)}...
+              Requested by: {request.profiles?.display_name || 'Kid'}
             </span>
           ) : request.status === 'approved' ? (
             <span style={{ color: 'var(--discord-green)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>

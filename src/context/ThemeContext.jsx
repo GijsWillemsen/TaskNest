@@ -14,10 +14,24 @@ export function ThemeProvider({ children }) {
   const activeTheme = normalizeTheme(profile?.theme_preference || localTheme)
   const userId = user?.id
 
-  // Synchronize document data-theme attribute
+  // Synchronize document data-theme attribute and mobile OS status bar color
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', activeTheme)
     localStorage.setItem('tasknest_theme', activeTheme)
+
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+    if (metaThemeColor) {
+      const themeColors = {
+        candy: '#ffffff',
+        playful: '#ffffff',
+        arcade: '#131b2e',
+        sunset: '#261642',
+        forest: '#142820',
+        obsidian: '#141416',
+        modern: '#141416',
+      }
+      metaThemeColor.setAttribute('content', themeColors[activeTheme] || '#141416')
+    }
   }, [activeTheme])
 
   const setTheme = useCallback(

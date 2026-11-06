@@ -65,16 +65,17 @@ export async function claimTask(taskId, userId) {
 }
 
 /**
- * Any family member can finish their claimed task
+ * Any family member can finish a task (either an open task directly, or their claimed task).
+ * Sets status to 'pending_approval' and records claimant as userId.
  */
 export async function finishTask(taskId, userId) {
   const { data, error } = await supabase
     .from('tasks')
     .update({
       status: 'pending_approval',
+      claimed_by: userId,
     })
     .eq('id', taskId)
-    .eq('claimed_by', userId)
     .select()
     .single()
 
