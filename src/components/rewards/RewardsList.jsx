@@ -16,7 +16,7 @@ import CreateRewardModal from './CreateRewardModal'
 import { getRewards, getRewardRequests } from '../../services/rewardService'
 import '../../styles/rewards.css'
 
-export default function RewardsList({ role, kidId, points, onPointsRefresh }) {
+export default function RewardsList({ role, kidId, familyId, points, onPointsRefresh }) {
   const [rewards, setRewards] = useState([])
   const [requests, setRequests] = useState([])
   const [loading, setLoading] = useState(true)
@@ -32,8 +32,8 @@ export default function RewardsList({ role, kidId, points, onPointsRefresh }) {
   const loadData = useCallback(async () => {
     try {
       const [rewardsData, requestsData] = await Promise.all([
-        getRewards(),
-        getRewardRequests(),
+        getRewards(familyId),
+        getRewardRequests(familyId),
       ])
       setRewards(rewardsData)
       setRequests(requestsData)
@@ -43,7 +43,7 @@ export default function RewardsList({ role, kidId, points, onPointsRefresh }) {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [familyId])
 
   useEffect(() => {
     let isMounted = true
@@ -51,8 +51,8 @@ export default function RewardsList({ role, kidId, points, onPointsRefresh }) {
     const init = async () => {
       try {
         const [rewardsData, requestsData] = await Promise.all([
-          getRewards(),
-          getRewardRequests(),
+          getRewards(familyId),
+          getRewardRequests(familyId),
         ])
         if (isMounted) {
           setRewards(rewardsData)
@@ -73,7 +73,7 @@ export default function RewardsList({ role, kidId, points, onPointsRefresh }) {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [familyId])
 
   const handleManualRefresh = useCallback(async () => {
     setLoading(true)
@@ -313,6 +313,7 @@ export default function RewardsList({ role, kidId, points, onPointsRefresh }) {
                 isParent={isParent}
                 kidId={kidId}
                 kidPoints={points}
+                familyId={familyId}
                 onRewardDeleted={handleRewardDeleted}
                 onRewardRequested={handleRewardRequested}
                 onError={setErrorMessage}
@@ -380,6 +381,7 @@ export default function RewardsList({ role, kidId, points, onPointsRefresh }) {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onRewardCreated={handleRewardCreated}
+        familyId={familyId}
       />
     </div>
   )

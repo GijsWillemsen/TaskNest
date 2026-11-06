@@ -7,6 +7,7 @@ export default function RewardCard({
   isParent,
   kidId,
   kidPoints,
+  familyId,
   onRewardDeleted,
   onRewardRequested,
   onError,
@@ -24,6 +25,7 @@ export default function RewardCard({
     setSubmitting(true)
     try {
       const newRequest = await requestReward({
+        familyId: familyId || reward.family_id,
         rewardId: reward.id,
         kidId,
       })

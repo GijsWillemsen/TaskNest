@@ -15,7 +15,7 @@ import { getTasks } from '../../services/taskService'
 import { supabase } from '../../supabaseClient'
 import '../../styles/tasks.css'
 
-export default function TaskList({ role, currentUserId, onPointsRefresh }) {
+export default function TaskList({ role, currentUserId, familyId, onPointsRefresh }) {
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all') // 'all', 'open', 'my_tasks', 'needs_approval', 'completed'
@@ -32,7 +32,7 @@ export default function TaskList({ role, currentUserId, onPointsRefresh }) {
 
     const loadTasks = async () => {
       try {
-        const data = await getTasks()
+        const data = await getTasks(familyId)
         if (isMounted) setTasks(data)
       } catch (err) {
         if (isMounted) {
@@ -63,13 +63,13 @@ export default function TaskList({ role, currentUserId, onPointsRefresh }) {
       isMounted = false
       supabase.removeChannel(channel)
     }
-  }, [onPointsRefresh])
+  }, [onPointsRefresh, familyId])
 
   // Manual refresh
   const handleManualRefresh = useCallback(async () => {
     setLoading(true)
     try {
-      const data = await getTasks()
+      const data = await getTasks(familyId)
       setTasks(data)
     } catch (err) {
       console.error('Failed to refresh tasks:', err)
@@ -77,7 +77,7 @@ export default function TaskList({ role, currentUserId, onPointsRefresh }) {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [familyId])
 
   // Clear notifications after 5 seconds
   useEffect(() => {
@@ -214,8 +214,8 @@ export default function TaskList({ role, currentUserId, onPointsRefresh }) {
         </div>
       )}
 
-      {/* Highlight Section: My Active Chores (Kids) */}
-      {!isParent && myActiveCount > 0 && filter === 'all' && (
+      {/* Highlight Section: My Active Chores */}
+      {myActiveCount > 0 && filter === 'all' && (
         <div style={{ marginBottom: '0.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
             <span style={{ color: 'var(--discord-orange)', fontWeight: 700, fontSize: '0.95rem' }}>
@@ -259,15 +259,13 @@ export default function TaskList({ role, currentUserId, onPointsRefresh }) {
             Open ({openCount})
           </button>
 
-          {!isParent && (
-            <button
-              className={`filter-tab ${filter === 'my_tasks' ? 'active' : ''}`}
-              onClick={() => setFilter('my_tasks')}
-            >
-              <Clock size={13} />
-              My Chores ({myActiveCount})
-            </button>
-          )}
+          <button
+            className={`filter-tab ${filter === 'my_tasks' ? 'active' : ''}`}
+            onClick={() => setFilter('my_tasks')}
+          >
+            <Clock size={13} />
+            My Chores ({myActiveCount})
+          </button>
 
           <button
             className={`filter-tab ${filter === 'needs_approval' ? 'active' : ''}`}
@@ -352,6 +350,7 @@ export default function TaskList({ role, currentUserId, onPointsRefresh }) {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onTaskCreated={handleTaskCreated}
+        familyId={familyId}
       />
     </div>
   )

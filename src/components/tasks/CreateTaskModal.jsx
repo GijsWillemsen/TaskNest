@@ -11,7 +11,7 @@ const PRESET_CHORES = [
   { title: 'Vacuum Living Room 🧹', description: 'Vacuum rug and sweep entryway', points: 20 },
 ]
 
-export default function CreateTaskModal({ isOpen, onClose, onTaskCreated }) {
+export default function CreateTaskModal({ isOpen, onClose, onTaskCreated, familyId }) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [pointsValue, setPointsValue] = useState(15)
@@ -38,6 +38,7 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated }) {
     setSaving(true)
     try {
       const newTask = await createTask({
+        familyId,
         title,
         description,
         points_value: pointsValue,

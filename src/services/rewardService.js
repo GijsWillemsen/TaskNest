@@ -1,14 +1,16 @@
 import { supabase } from '../supabaseClient'
 
 /**
- * Fetch all available catalog rewards
+ * Fetch all available catalog rewards for a family
  */
-export async function getRewards() {
-  const { data, error } = await supabase
-    .from('rewards')
-    .select('*')
-    .order('cost', { ascending: true })
+export async function getRewards(familyId) {
+  let query = supabase.from('rewards').select('*').order('cost', { ascending: true })
 
+  if (familyId) {
+    query = query.eq('family_id', familyId)
+  }
+
+  const { data, error } = await query
   if (error) throw error
   return data || []
 }
@@ -16,12 +18,13 @@ export async function getRewards() {
 /**
  * Parent creates a new reward in the catalog
  */
-export async function createReward({ title, description, cost }) {
+export async function createReward({ familyId, title, description, cost }) {
   const pointsCost = parseInt(cost, 10) || 20
   const { data, error } = await supabase
     .from('rewards')
     .insert([
       {
+        family_id: familyId,
         title: title.trim(),
         description: description?.trim() || '',
         cost: pointsCost,
@@ -44,13 +47,14 @@ export async function deleteReward(rewardId) {
 }
 
 /**
- * Kid requests to buy a reward (creates a pending reward_request)
+ * Kid requests to buy a reward
  */
-export async function requestReward({ rewardId, kidId }) {
+export async function requestReward({ familyId, rewardId, kidId }) {
   const { data, error } = await supabase
     .from('reward_requests')
     .insert([
       {
+        family_id: familyId,
         reward_id: rewardId,
         kid_id: kidId,
         status: 'pending',
@@ -64,14 +68,15 @@ export async function requestReward({ rewardId, kidId }) {
 }
 
 /**
- * Fetch all reward requests (joins reward and profile info if available)
+ * Fetch all reward requests for a family
  */
-export async function getRewardRequests() {
+export async function getRewardRequests(familyId) {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('reward_requests')
       .select(`
         id,
+        family_id,
         reward_id,
         kid_id,
         status,
@@ -81,13 +86,24 @@ export async function getRewardRequests() {
       `)
       .order('created_at', { ascending: false })
 
+    if (familyId) {
+      query = query.eq('family_id', familyId)
+    }
+
+    const { data, error } = await query
+
     if (error) {
-      console.warn('Nested join failed on reward_requests, trying flat select:', error.message)
-      const { data: flatData, error: flatError } = await supabase
+      console.warn('Nested join failed on reward_requests, falling back to flat select:', error.message)
+      let flatQuery = supabase
         .from('reward_requests')
         .select('*')
         .order('created_at', { ascending: false })
 
+      if (familyId) {
+        flatQuery = flatQuery.eq('family_id', familyId)
+      }
+
+      const { data: flatData, error: flatError } = await flatQuery
       if (flatError) throw flatError
       return flatData || []
     }
@@ -106,7 +122,6 @@ export async function getRewardRequests() {
  * 3. Sets request status to 'approved'.
  */
 export async function approveRewardRequest({ requestId, rewardCost, kidId }) {
-  // Step 1: Check kid's latest points
   const { data: kidProfile, error: profileErr } = await supabase
     .from('profiles')
     .select('points')
@@ -120,11 +135,10 @@ export async function approveRewardRequest({ requestId, rewardCost, kidId }) {
 
   if (currentPoints < cost) {
     throw new Error(
-      `Kid no longer has enough points! Required: ${cost} pts, Current: ${currentPoints} pts.`
+      `Not enough points! Required: ${cost} pts, Current: ${currentPoints} pts.`
     )
   }
 
-  // Step 2: Deduct points from profile
   const remainingPoints = currentPoints - cost
   const { error: deductErr } = await supabase
     .from('profiles')
@@ -133,7 +147,6 @@ export async function approveRewardRequest({ requestId, rewardCost, kidId }) {
 
   if (deductErr) throw deductErr
 
-  // Step 3: Mark request as approved
   const { data: updatedRequest, error: reqErr } = await supabase
     .from('reward_requests')
     .update({ status: 'approved' })
@@ -147,7 +160,7 @@ export async function approveRewardRequest({ requestId, rewardCost, kidId }) {
 }
 
 /**
- * Parent rejects a reward request (no points deducted)
+ * Parent rejects a reward request
  */
 export async function rejectRewardRequest(requestId) {
   const { data, error } = await supabase
