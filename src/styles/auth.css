@@ -735,15 +735,16 @@
   left: 0;
   right: 0;
   height: 64px;
-  background-color: rgba(18, 20, 29, 0.94);
+  background-color: var(--bg-surface);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1.5px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: space-around;
   z-index: 50;
   padding-bottom: env(safe-area-inset-bottom, 0px);
+  box-sizing: border-box;
 }
 
 .nav-item {
@@ -755,16 +756,16 @@
   text-decoration: none;
   color: var(--text-dim);
   font-size: 0.75rem;
-  font-weight: 500;
-  padding: 6px 18px;
+  font-weight: 600;
+  padding: 6px 16px;
   border-radius: var(--radius-sm);
   transition: all 0.2s ease;
   position: relative;
 }
 
 .nav-item.active {
-  color: var(--discord-blurple);
-  font-weight: 700;
+  color: var(--theme-accent, var(--discord-blurple));
+  font-weight: 800;
 }
 
 .nav-item-icon {
@@ -776,7 +777,6 @@
 
 .nav-item.active .nav-item-icon {
   transform: scale(1.12);
-  filter: drop-shadow(0 0 8px var(--discord-blurple-glow));
 }
 
 .nav-item-active-bar {
@@ -784,36 +784,198 @@
   top: 0;
   width: 28px;
   height: 2.5px;
-  background-color: var(--discord-blurple);
+  background-color: var(--theme-accent, var(--discord-blurple));
   border-radius: 2px;
-  box-shadow: 0 0 8px var(--discord-blurple-glow);
 }
 
-[data-theme='playful'] .bottom-nav-bar {
-  background: #ffffff;
-  border: 2.5px solid #581c87;
-  box-shadow: 0 5px 0 #581c87;
-  border-radius: 24px;
-  left: 14px;
-  right: 14px;
-  bottom: 12px;
-  height: 62px;
+/* =========================================================
+   RESPONSIVE MOBILE VIEWPORT & ZERO-SHIFT GRID FIXES
+   ========================================================= */
+
+@media (max-width: 640px) {
+  .dashboard-main {
+    padding: 1rem 0.85rem 5.5rem 0.85rem !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+  }
+
+  .tasks-grid,
+  .rewards-grid,
+  .placeholder-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 0.85rem !important;
+  }
+
+  .task-card,
+  .reward-card,
+  .placeholder-card {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+  }
 }
 
-[data-theme='playful'] .nav-item {
-  color: #581c87;
-  font-weight: 600;
+/* =========================================================
+   5 DISTINCT THEMES PALETTES & CARD ENHANCEMENTS
+   ========================================================= */
+
+/* 1. Candy Pop Theme 🍬 */
+[data-theme='candy'] .auth-card,
+[data-theme='playful'] .auth-card,
+[data-theme='candy'] .task-card,
+[data-theme='playful'] .task-card,
+[data-theme='candy'] .reward-card,
+[data-theme='playful'] .reward-card,
+[data-theme='candy'] .settings-card,
+[data-theme='playful'] .settings-card,
+[data-theme='candy'] .modal-content,
+[data-theme='playful'] .modal-content {
+  border: 2.5px solid #581c87 !important;
+  box-shadow: 0 5px 0 #581c87 !important;
+  border-radius: 20px !important;
+  background-color: #ffffff !important;
 }
 
-[data-theme='playful'] .nav-item.active {
-  background: rgba(124, 58, 237, 0.12);
-  color: #7c3aed;
-  border-radius: 16px;
-  font-weight: 800;
+[data-theme='candy'] .auth-submit-btn,
+[data-theme='playful'] .auth-submit-btn,
+[data-theme='candy'] .btn-create-chore,
+[data-theme='playful'] .btn-create-chore {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border: 2px solid #4c1d95 !important;
+  box-shadow: 0 4px 0 #4c1d95 !important;
+  border-radius: 14px !important;
 }
 
-[data-theme='playful'] .nav-item-active-bar {
-  display: none;
+[data-theme='candy'] .points-pill,
+[data-theme='playful'] .points-pill {
+  background: #fef08a !important;
+  border: 2px solid #ca8a04 !important;
+  box-shadow: 0 3px 0 #ca8a04 !important;
+  color: #854d0e !important;
 }
+
+/* 2. Arcade Neon Theme 👾 */
+[data-theme='arcade'] .auth-card,
+[data-theme='arcade'] .task-card,
+[data-theme='arcade'] .reward-card,
+[data-theme='arcade'] .settings-card,
+[data-theme='arcade'] .modal-content {
+  border: 2px solid #00f2fe !important;
+  box-shadow: 0 4px 0 #00f2fe, 0 8px 24px rgba(0, 242, 254, 0.15) !important;
+  border-radius: 16px !important;
+  background-color: #131b2e !important;
+}
+
+[data-theme='arcade'] .auth-submit-btn,
+[data-theme='arcade'] .btn-create-chore,
+[data-theme='arcade'] .btn-redeem {
+  background: #00e676 !important;
+  color: #0b0f19 !important;
+  font-weight: 800 !important;
+  border: 2px solid #00c853 !important;
+  box-shadow: 0 4px 0 #00a844 !important;
+  border-radius: 12px !important;
+}
+
+[data-theme='arcade'] .points-pill {
+  background: rgba(255, 214, 0, 0.15) !important;
+  border: 1.5px solid #ffd600 !important;
+  color: #ffd600 !important;
+}
+
+/* 3. Sunset Glow Theme 🌅 */
+[data-theme='sunset'] .auth-card,
+[data-theme='sunset'] .task-card,
+[data-theme='sunset'] .reward-card,
+[data-theme='sunset'] .settings-card,
+[data-theme='sunset'] .modal-content {
+  border: 2px solid #f43f5e !important;
+  box-shadow: 0 4px 18px rgba(244, 63, 94, 0.22) !important;
+  border-radius: 18px !important;
+  background-color: #261642 !important;
+}
+
+[data-theme='sunset'] .auth-submit-btn,
+[data-theme='sunset'] .btn-create-chore,
+[data-theme='sunset'] .btn-redeem {
+  background: #f43f5e !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 14px rgba(244, 63, 94, 0.35) !important;
+  border-radius: 14px !important;
+}
+
+[data-theme='sunset'] .points-pill {
+  background: rgba(251, 191, 36, 0.15) !important;
+  border: 1.5px solid #fbbf24 !important;
+  color: #fbbf24 !important;
+}
+
+/* 4. Nordic Forest Theme 🌲 */
+[data-theme='forest'] .auth-card,
+[data-theme='forest'] .task-card,
+[data-theme='forest'] .reward-card,
+[data-theme='forest'] .settings-card,
+[data-theme='forest'] .modal-content {
+  border: 1.5px solid #2d5a48 !important;
+  box-shadow: 0 6px 20px rgba(12, 25, 20, 0.6) !important;
+  border-radius: 18px !important;
+  background-color: #142820 !important;
+}
+
+[data-theme='forest'] .auth-submit-btn,
+[data-theme='forest'] .btn-create-chore,
+[data-theme='forest'] .btn-redeem {
+  background: #10b981 !important;
+  color: #0c1914 !important;
+  font-weight: 700 !important;
+  border-radius: 12px !important;
+}
+
+[data-theme='forest'] .points-pill {
+  background: rgba(234, 179, 8, 0.15) !important;
+  border: 1.5px solid #eab308 !important;
+  color: #eab308 !important;
+}
+
+/* 5. Obsidian Luxe Theme 🖤 */
+[data-theme='obsidian'] .auth-card,
+[data-theme='modern'] .auth-card,
+[data-theme='obsidian'] .task-card,
+[data-theme='modern'] .task-card,
+[data-theme='obsidian'] .reward-card,
+[data-theme='modern'] .reward-card,
+[data-theme='obsidian'] .settings-card,
+[data-theme='modern'] .settings-card,
+[data-theme='obsidian'] .modal-content,
+[data-theme='modern'] .modal-content {
+  border: 1px solid #27272a !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+  border-radius: 16px !important;
+  background-color: #141416 !important;
+}
+
+[data-theme='obsidian'] .auth-submit-btn,
+[data-theme='modern'] .auth-submit-btn,
+[data-theme='obsidian'] .btn-create-chore,
+[data-theme='modern'] .btn-create-chore {
+  background: #ffffff !important;
+  color: #09090b !important;
+  font-weight: 700 !important;
+  border-radius: 10px !important;
+}
+
+[data-theme='obsidian'] .points-pill,
+[data-theme='modern'] .points-pill {
+  background: #1e1e24 !important;
+  border: 1px solid #3f3f46 !important;
+  color: #facc15 !important;
+}
+
 
 

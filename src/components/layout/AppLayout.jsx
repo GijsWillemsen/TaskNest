@@ -1,75 +1,59 @@
 import { Outlet } from 'react-router-dom'
 import { useAuth } from '../../context/useAuth'
-import { useTheme } from '../../context/useTheme'
 import BottomNavBar from '../navigation/BottomNavBar'
 import FamilySetupPrompt from '../family/FamilySetupPrompt'
-import { Coins, Star, Users } from 'lucide-react'
+import { Coins, Users } from 'lucide-react'
 import '../../styles/auth.css'
 
 export default function AppLayout() {
   const { user, family, familyId, role, points, displayName, refreshProfile } = useAuth()
-  const { theme } = useTheme()
-
-  const isPlayful = theme === 'playful'
 
   return (
     <div className="dashboard-page" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Top Navbar */}
       <header className="dashboard-nav">
         <div className="brand-wrapper">
-          <div className="nav-logo-badge">
-            <img src="/logo.png" alt="TaskNest" className="brand-logo-img" />
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              padding: '0.35rem 0.75rem',
+              borderRadius: '10px',
+              backgroundColor: 'var(--bg-surface-elevated)',
+              border: '1px solid var(--border-subtle)',
+              color: 'var(--text-pure)',
+              fontWeight: 700,
+              fontSize: '0.92rem',
+            }}
+          >
+            <Users size={16} color="var(--theme-accent, var(--discord-blurple))" />
+            <span>{family?.name || 'Family Nest'}</span>
           </div>
-          <span>TaskNest</span>
-
-          {family?.name && (
-            <span
-              style={{
-                fontSize: '0.78rem',
-                fontWeight: 700,
-                color: 'var(--discord-blurple)',
-                backgroundColor: isPlayful ? 'rgba(124, 58, 237, 0.12)' : 'rgba(88, 101, 242, 0.12)',
-                border: isPlayful ? '1.5px solid #7c3aed' : '1px solid rgba(88, 101, 242, 0.3)',
-                padding: '0.2rem 0.55rem',
-                borderRadius: '8px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.3rem',
-                marginLeft: '0.25rem',
-              }}
-            >
-              <Users size={12} />
-              {family.name}
-            </span>
-          )}
         </div>
 
         <div className="nav-actions">
           {displayName && (
             <span
               style={{
-                fontSize: '0.85rem',
+                fontSize: '0.88rem',
                 fontWeight: 600,
                 color: 'var(--text-main)',
-                marginRight: '0.25rem',
+                marginRight: '0.15rem',
               }}
             >
               {displayName}
             </span>
           )}
 
-          {/* Points Pill */}
+          {/* Points Pill (Coin symbol + amount) */}
           <div
             className="points-pill"
-            style={{ padding: '0.35rem 0.8rem', fontSize: '0.9rem' }}
-            title="Your current points"
+            style={{ padding: '0.35rem 0.75rem', fontSize: '0.9rem', gap: '0.35rem' }}
+            title="Current points balance"
           >
-            {isPlayful ? (
-              <Star size={16} fill="#eab308" color="#ca8a04" />
-            ) : (
-              <Coins size={16} color="var(--discord-yellow)" />
-            )}
-            <span>{points} pts</span>
+            <Coins size={16} />
+            <span>{points}</span>
           </div>
         </div>
       </header>

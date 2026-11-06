@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/useAuth'
 import { useTheme } from '../../context/useTheme'
+import { THEMES } from '../../context/theme-context'
 import { createFamily, joinFamilyByCode } from '../../services/familyService'
 import Toast from '../common/Toast'
 import {
@@ -15,8 +16,6 @@ import {
   ArrowRight,
   ArrowLeft,
   Sparkles,
-  Zap,
-  Gamepad2,
   CheckCircle2,
 } from 'lucide-react'
 import '../../styles/auth.css'
@@ -29,8 +28,8 @@ export default function SignUp() {
   const [role, setRole] = useState('parent') // 'parent' or 'kid'
   const [displayName, setDisplayName] = useState('')
 
-  // Step 2: Theme Selection
-  const [themeChoice, setThemeChoice] = useState('playful') // 'playful' or 'modern'
+  // Step 2: Theme Selection (default: 'candy')
+  const [themeChoice, setThemeChoice] = useState('candy')
 
   // Step 3: Account Credentials & Family Setup
   const [email, setEmail] = useState('')
@@ -49,7 +48,7 @@ export default function SignUp() {
   const showError = (msg) => setToast({ message: msg, type: 'error' })
   const showSuccess = (msg) => setToast({ message: msg, type: 'success' })
 
-  // Synchronize active theme preview when themeChoice changes
+  // Synchronize active theme preview as the user selects a theme in Step 2
   useEffect(() => {
     setTheme(themeChoice)
   }, [themeChoice, setTheme])
@@ -60,11 +59,11 @@ export default function SignUp() {
     setToast({ message: '', type: 'error' })
 
     if (!displayName.trim()) {
-      showError('Please enter your name or nickname.')
+      showError('Please enter your name.')
       return
     }
 
-    // Auto-suggest family name for parents based on display name
+    // Auto-suggest family name for parents
     if (role === 'parent' && !familyName) {
       setFamilyName(`${displayName.trim()}'s Family`)
     }
@@ -121,13 +120,15 @@ export default function SignUp() {
 
     setSubmitting(true)
     try {
-      // 1. Sign up user in Supabase auth with metadata
+      // 1. Sign up user with metadata (family_name & invite_code included so PostgreSQL trigger links automatically)
       const authData = await signUp({
         email: cleanEmail,
         password,
         role,
         displayName: displayName.trim(),
         themePreference: themeChoice,
+        familyName: role === 'parent' ? familyName.trim() : null,
+        inviteCode: role === 'kid' ? inviteCode.trim().toUpperCase() : null,
       })
 
       const userId = authData?.user?.id
@@ -135,19 +136,25 @@ export default function SignUp() {
         throw new Error('Account initialization failed. Please try again.')
       }
 
-      // 2. Setup Family
-      if (role === 'parent') {
-        const newFam = await createFamily({
-          name: familyName.trim(),
-          userId,
-        })
-        showSuccess(`Family "${newFam.name}" created! Invite code: ${newFam.invite_code}`)
-      } else {
-        await joinFamilyByCode({
-          inviteCode: inviteCode.trim().toUpperCase(),
-          userId,
-        })
-        showSuccess('Successfully joined your family nest!')
+      // 2. Client-side fallback setup for family
+      try {
+        if (role === 'parent') {
+          const newFam = await createFamily({
+            name: familyName.trim(),
+            userId,
+          })
+          if (newFam) {
+            showSuccess(`Family "${newFam.name}" created! Invite code: ${newFam.invite_code}`)
+          }
+        } else {
+          await joinFamilyByCode({
+            inviteCode: inviteCode.trim().toUpperCase(),
+            userId,
+          })
+          showSuccess('Successfully joined your family!')
+        }
+      } catch (famErr) {
+        console.warn('Post-signup family fallback notice:', famErr.message)
       }
 
       await refreshProfile()
@@ -177,17 +184,14 @@ export default function SignUp() {
     <div className="auth-page">
       <div className="auth-card" style={{ maxWidth: '480px' }}>
         <div className="auth-header">
-          <div className="auth-logo-badge">
-            <img src="/logo.png" alt="TaskNest Logo" className="brand-logo-img" />
-          </div>
           <h1 className="auth-title">
-            {step === 1 && 'Welcome to TaskNest'}
-            {step === 2 && 'Pick Your Vibe'}
-            {step === 3 && 'Create Account'}
+            {step === 1 && 'Create Account'}
+            {step === 2 && 'Choose Theme'}
+            {step === 3 && 'Final Step'}
           </h1>
           <p className="auth-subtitle">
-            {step === 1 && 'Step 1 of 3: Choose your role & name'}
-            {step === 2 && 'Step 2 of 3: Choose your visual theme'}
+            {step === 1 && 'Step 1 of 3: Role & Name'}
+            {step === 2 && 'Step 2 of 3: Choose your visual style'}
             {step === 3 && (role === 'parent' ? 'Step 3 of 3: Credentials & Family setup' : 'Step 3 of 3: Credentials & Join family')}
           </p>
         </div>
@@ -208,7 +212,7 @@ export default function SignUp() {
                 flex: 1,
                 height: '5px',
                 borderRadius: '4px',
-                backgroundColor: s <= step ? 'var(--discord-blurple)' : 'var(--bg-surface-elevated)',
+                backgroundColor: s <= step ? 'var(--theme-accent, var(--discord-blurple))' : 'var(--bg-surface-elevated)',
                 border: s <= step ? 'none' : '1px solid var(--border-subtle)',
                 transition: 'all 0.25s ease',
               }}
@@ -230,16 +234,16 @@ export default function SignUp() {
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    gap: '0.4rem',
-                    padding: '1.1rem 0.8rem',
+                    gap: '0.35rem',
+                    padding: '1rem 0.75rem',
                     borderRadius: '16px',
-                    border: role === 'parent' ? '2.5px solid var(--discord-purple)' : '1px solid var(--border-subtle)',
-                    background: role === 'parent' ? 'rgba(155, 89, 182, 0.12)' : 'var(--bg-surface-elevated)',
+                    border: role === 'parent' ? '2.5px solid var(--theme-accent, var(--discord-purple))' : '1px solid var(--border-subtle)',
+                    background: role === 'parent' ? 'rgba(155, 89, 182, 0.14)' : 'var(--bg-surface-elevated)',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
                   }}
                 >
-                  <div style={{ fontSize: '1.8rem' }}>👑</div>
+                  <div style={{ fontSize: '1.75rem' }}>👑</div>
                   <strong style={{ color: 'var(--text-pure)', fontSize: '1.05rem' }}>Parent</strong>
                   <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', textAlign: 'center' }}>
                     Create chores, review proof, approve rewards
@@ -254,16 +258,16 @@ export default function SignUp() {
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    gap: '0.4rem',
-                    padding: '1.1rem 0.8rem',
+                    gap: '0.35rem',
+                    padding: '1rem 0.75rem',
                     borderRadius: '16px',
                     border: role === 'kid' ? '2.5px solid var(--discord-yellow)' : '1px solid var(--border-subtle)',
-                    background: role === 'kid' ? 'rgba(254, 231, 92, 0.12)' : 'var(--bg-surface-elevated)',
+                    background: role === 'kid' ? 'rgba(254, 231, 92, 0.14)' : 'var(--bg-surface-elevated)',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
                   }}
                 >
-                  <div style={{ fontSize: '1.8rem' }}>🚀</div>
+                  <div style={{ fontSize: '1.75rem' }}>🚀</div>
                   <strong style={{ color: 'var(--text-pure)', fontSize: '1.05rem' }}>Kid</strong>
                   <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', textAlign: 'center' }}>
                     Claim chores, earn points, redeem cool rewards
@@ -274,7 +278,7 @@ export default function SignUp() {
 
             <div className="form-group" style={{ marginTop: '0.5rem' }}>
               <label htmlFor="displayName" className="form-label">
-                What should we call you?
+                What is your name?
               </label>
               <div className="input-wrapper">
                 <User size={18} className="input-icon" />
@@ -297,97 +301,68 @@ export default function SignUp() {
           </form>
         )}
 
-        {/* STEP 2: Theme Selection */}
+        {/* STEP 2: 5 Themes Selection */}
         {step === 2 && (
           <form onSubmit={handleStep2Next} className="auth-form">
             <div className="form-group">
-              <label className="form-label">Choose your interface style</label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                {/* Option A: Playful */}
-                <div
-                  onClick={() => setThemeChoice('playful')}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '1rem',
-                    padding: '1rem',
-                    borderRadius: '18px',
-                    border: themeChoice === 'playful' ? '2.5px solid #581c87' : '1.5px solid var(--border-subtle)',
-                    boxShadow: themeChoice === 'playful' ? '0 5px 0 #581c87' : 'none',
-                    background: themeChoice === 'playful' ? 'rgba(124, 58, 237, 0.12)' : 'var(--bg-surface-elevated)',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: '46px',
-                      height: '46px',
-                      borderRadius: '14px',
-                      background: '#e0f2fe',
-                      border: '2px solid #581c87',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#7c3aed',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <Gamepad2 size={24} />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <strong style={{ color: 'var(--text-pure)', fontSize: '1rem' }}>Playful 🎮</strong>
-                      {themeChoice === 'playful' && <CheckCircle2 size={16} color="var(--discord-blurple)" />}
-                    </div>
-                    <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                      Bright sky blue, 3D chunky purple depth, bouncy cards & star points.
-                    </p>
-                  </div>
-                </div>
+              <label className="form-label">Choose your theme (from playful to mature)</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', maxHeight: '360px', overflowY: 'auto', paddingRight: '4px' }}>
+                {THEMES.map((t) => {
+                  const isSelected = themeChoice === t.id
+                  return (
+                    <div
+                      key={t.id}
+                      onClick={() => setThemeChoice(t.id)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.85rem',
+                        padding: '0.85rem 1rem',
+                        borderRadius: '16px',
+                        border: isSelected ? `2.5px solid ${t.accentPreview}` : '1.5px solid var(--border-subtle)',
+                        boxShadow: isSelected ? `0 4px 14px ${t.accentPreview}33` : 'none',
+                        background: isSelected ? 'var(--bg-surface-elevated)' : 'var(--bg-surface)',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '38px',
+                          height: '38px',
+                          borderRadius: '12px',
+                          background: t.bgPreview,
+                          border: `2px solid ${t.accentPreview}`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: '14px',
+                            height: '14px',
+                            borderRadius: '50%',
+                            backgroundColor: t.accentPreview,
+                          }}
+                        />
+                      </div>
 
-                {/* Option B: Modern */}
-                <div
-                  onClick={() => setThemeChoice('modern')}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '1rem',
-                    padding: '1rem',
-                    borderRadius: '18px',
-                    border: themeChoice === 'modern' ? '2.5px solid var(--discord-blurple)' : '1.5px solid var(--border-subtle)',
-                    boxShadow: themeChoice === 'modern' ? '0 4px 14px rgba(88, 101, 242, 0.35)' : 'none',
-                    background: themeChoice === 'modern' ? 'rgba(88, 101, 242, 0.12)' : 'var(--bg-surface-elevated)',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: '46px',
-                      height: '46px',
-                      borderRadius: '14px',
-                      background: '#12141d',
-                      border: '1.5px solid #5865f2',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#5865f2',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <Zap size={24} />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <strong style={{ color: 'var(--text-pure)', fontSize: '1rem' }}>Modern ⚡</strong>
-                      {themeChoice === 'modern' && <CheckCircle2 size={16} color="var(--discord-blurple)" />}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.4rem' }}>
+                          <strong style={{ color: 'var(--text-pure)', fontSize: '0.95rem' }}>
+                            {t.name}
+                          </strong>
+                          {isSelected && <CheckCircle2 size={16} color="var(--theme-accent, var(--discord-blurple))" />}
+                        </div>
+                        <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.35 }}>
+                          {t.description}
+                        </p>
+                      </div>
                     </div>
-                    <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                      Sleek dark monochrome with vibrant Discord role accent glows.
-                    </p>
-                  </div>
-                </div>
+                  )
+                })}
               </div>
             </div>
 
@@ -462,7 +437,7 @@ export default function SignUp() {
             {role === 'parent' ? (
               <div className="form-group">
                 <label htmlFor="familyName" className="form-label">
-                  Family Nest Name
+                  Family Name
                 </label>
                 <div className="input-wrapper">
                   <Users size={18} className="input-icon" />
@@ -477,7 +452,7 @@ export default function SignUp() {
                   />
                 </div>
                 <span className="form-helper-text">
-                  A 6-digit invite code will be automatically generated so kids can join.
+                  Your family group and 6-digit invite code will be created automatically.
                 </span>
               </div>
             ) : (
@@ -524,12 +499,12 @@ export default function SignUp() {
                 {submitting ? (
                   <>
                     <span className="btn-spinner" />
-                    <span>Creating Nest...</span>
+                    <span>Setting up...</span>
                   </>
                 ) : (
                   <>
                     <Sparkles size={18} />
-                    <span>Complete Sign Up</span>
+                    <span>Create Account</span>
                   </>
                 )}
               </button>

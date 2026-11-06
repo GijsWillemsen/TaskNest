@@ -118,11 +118,11 @@ export function AuthProvider({ children }) {
     }
   }, [fetchProfile])
 
-  const signUp = async ({ email, password, role, displayName, themePreference }) => {
+  const signUp = async ({ email, password, role, displayName, themePreference, familyName, inviteCode }) => {
     setLoading(true)
     const cleanEmail = email.trim().toLowerCase()
-    const chosenName = displayName?.trim() || 'Hero'
-    const chosenTheme = themePreference || 'playful'
+    const chosenName = displayName?.trim() || (role === 'parent' ? 'Parent' : 'Kid')
+    const chosenTheme = themePreference || 'candy'
 
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -133,29 +133,68 @@ export function AuthProvider({ children }) {
             role,
             display_name: chosenName,
             theme_preference: chosenTheme,
+            family_name: familyName?.trim() || null,
+            invite_code: inviteCode?.trim()?.toUpperCase() || null,
           },
         },
       })
 
       if (error) throw error
 
-      if (data?.session && data?.user) {
-        await supabase
-          .from('profiles')
-          .upsert({
-            id: data.user.id,
-            role,
-            display_name: chosenName,
-            theme_preference: chosenTheme,
-            points: 0,
+      // Attempt immediate login if email confirmation is disabled
+      let currentSession = data?.session
+      if (!currentSession) {
+        try {
+          const signInRes = await supabase.auth.signInWithPassword({
+            email: cleanEmail,
+            password,
           })
-        await fetchProfile(data.user.id, role)
+          if (signInRes?.data?.session) {
+            currentSession = signInRes.data.session
+          }
+        } catch {
+          // Email confirmation is required, expected
+        }
+      }
+
+      if (data?.user) {
+        // Direct upsert to ensure profile is immediate
+        try {
+          await supabase
+            .from('profiles')
+            .upsert({
+              id: data.user.id,
+              role,
+              display_name: chosenName,
+              theme_preference: chosenTheme,
+              points: 0,
+            })
+        } catch (profErr) {
+          console.warn('Direct profile upsert fallback:', profErr.message)
+        }
+
+        if (currentSession) {
+          await fetchProfile(data.user.id, role)
+        }
       }
 
       return data
     } finally {
       setLoading(false)
     }
+  }
+
+  const updateDisplayName = async (newName) => {
+    if (!user?.id || !newName?.trim()) return
+    const cleanName = newName.trim()
+    const { error } = await supabase
+      .from('profiles')
+      .update({ display_name: cleanName })
+      .eq('id', user.id)
+
+    if (error) throw error
+    setProfile((prev) => (prev ? { ...prev, display_name: cleanName } : prev))
+    return cleanName
   }
 
   const signIn = async ({ email, password }) => {
@@ -212,6 +251,7 @@ export function AuthProvider({ children }) {
     signOut,
     resendConfirmation,
     refreshProfile,
+    updateDisplayName,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

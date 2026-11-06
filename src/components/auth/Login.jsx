@@ -76,11 +76,8 @@ export default function Login() {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-header">
-          <div className="auth-logo-badge">
-            <img src="/logo.png" alt="TaskNest Logo" className="brand-logo-img" />
-          </div>
-          <h1 className="auth-title">Welcome Back</h1>
-          <p className="auth-subtitle">Sign in to your TaskNest family account</p>
+          <h1 className="auth-title">Sign In</h1>
+          <p className="auth-subtitle">Welcome back to your family hub</p>
         </div>
 
         {toast.message && (
