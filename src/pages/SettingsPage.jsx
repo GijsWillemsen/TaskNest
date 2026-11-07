@@ -524,9 +524,6 @@ export default function SettingsPage() {
                 )}
               </div>
             )}
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              {t('settings.invite_code_desc')}
-            </span>
           </div>
         </div>
 
@@ -683,8 +680,8 @@ export default function SettingsPage() {
       {adjustMember && (
         <div className="modal-backdrop" onClick={() => !adjustLoading && setAdjustMember(null)}>
           <div
-            className="modal-card"
-            style={{ maxWidth: '440px', width: '92%' }}
+            className="modal-content"
+            style={{ maxWidth: '440px', width: '92%', background: 'var(--bg-surface)' }}
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
@@ -694,7 +691,8 @@ export default function SettingsPage() {
               <button
                 type="button"
                 onClick={() => !adjustLoading && setAdjustMember(null)}
-                style={{ background: 'none', border: 'none', color: 'var(--text-dim)', cursor: 'pointer' }}
+                style={{ background: 'none', border: 'none', color: 'var(--text-dim)', cursor: 'pointer', padding: '4px' }}
+                aria-label={t('common.close')}
               >
                 <X size={18} />
               </button>
