@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, Plus, RotateCw, Clock, Calendar, Users } from 'lucide-react'
+import { X, Plus, RotateCw, Clock, Calendar, Users, Check, Copy } from 'lucide-react'
 import { createTask } from '../../services/taskService'
 import { useLanguage } from '../../context/useLanguage'
 
@@ -12,7 +12,8 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated, family
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [pointsValue, setPointsValue] = useState(15)
-  const [assignedTo, setAssignedTo] = useState(null) // null = open for anyone, or profile id
+  const [selectedAssignees, setSelectedAssignees] = useState([]) // array of member ids
+  const [multiAssignMode, setMultiAssignMode] = useState('pool') // 'pool' (first to claim) | 'individual' (separate copy for each)
   const [recurrence, setRecurrence] = useState('none') // 'none', 'daily', 'weekly', 'monthly', 'yearly'
   const [recurrenceTime, setRecurrenceTime] = useState('')
   const [selectedDays, setSelectedDays] = useState(['monday'])
@@ -70,6 +71,14 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated, family
     }
   }
 
+  const toggleAssignee = (memberId) => {
+    if (selectedAssignees.includes(memberId)) {
+      setSelectedAssignees(selectedAssignees.filter((id) => id !== memberId))
+    } else {
+      setSelectedAssignees([...selectedAssignees, memberId])
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setErrorMsg('')
@@ -81,30 +90,89 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated, family
 
     setSaving(true)
     try {
-      const isAssigned = Boolean(assignedTo)
       const daysString = (recurrence === 'weekly' || recurrence === 'daily') && selectedDays.length > 0
         ? selectedDays.join(',')
         : null
+      const points = parseInt(pointsValue, 10) || 15
 
-      const newTask = await createTask({
-        familyId,
-        title,
-        description,
-        points_value: parseInt(pointsValue, 10) || 15,
-        recurrence,
-        recurrence_time: recurrence !== 'none' && recurrenceTime ? recurrenceTime : null,
-        recurrence_day: daysString,
-        assigned_to: assignedTo || null,
-        claimed_by: assignedTo || null,
-        status: isAssigned ? 'claimed' : 'open',
-      })
+      if (selectedAssignees.length === 0) {
+        // Open for anyone
+        const newTask = await createTask({
+          familyId,
+          title,
+          description,
+          points_value: points,
+          recurrence,
+          recurrence_time: recurrence !== 'none' && recurrenceTime ? recurrenceTime : null,
+          recurrence_day: daysString,
+          assigned_to: null,
+          claimed_by: null,
+          status: 'open',
+          eligible_assignees: null,
+        })
+        onTaskCreated(newTask)
+      } else if (selectedAssignees.length === 1) {
+        // Single specific person assigned
+        const singleId = selectedAssignees[0]
+        const newTask = await createTask({
+          familyId,
+          title,
+          description,
+          points_value: points,
+          recurrence,
+          recurrence_time: recurrence !== 'none' && recurrenceTime ? recurrenceTime : null,
+          recurrence_day: daysString,
+          assigned_to: singleId,
+          claimed_by: singleId,
+          status: 'claimed',
+          eligible_assignees: null,
+        })
+        onTaskCreated(newTask)
+      } else {
+        // Multiple people selected
+        if (multiAssignMode === 'individual') {
+          // Individual separate tasks for each selected member
+          for (const memberId of selectedAssignees) {
+            const newTask = await createTask({
+              familyId,
+              title,
+              description,
+              points_value: points,
+              recurrence,
+              recurrence_time: recurrence !== 'none' && recurrenceTime ? recurrenceTime : null,
+              recurrence_day: daysString,
+              assigned_to: memberId,
+              claimed_by: memberId,
+              status: 'claimed',
+              eligible_assignees: null,
+            })
+            onTaskCreated(newTask)
+          }
+        } else {
+          // Shared pool: 1 task, but only selected people can claim it
+          const newTask = await createTask({
+            familyId,
+            title,
+            description,
+            points_value: points,
+            recurrence,
+            recurrence_time: recurrence !== 'none' && recurrenceTime ? recurrenceTime : null,
+            recurrence_day: daysString,
+            assigned_to: null,
+            claimed_by: null,
+            status: 'open',
+            eligible_assignees: selectedAssignees,
+          })
+          onTaskCreated(newTask)
+        }
+      }
 
-      onTaskCreated(newTask)
       onClose()
       setTitle('')
       setDescription('')
       setPointsValue(15)
-      setAssignedTo(null)
+      setSelectedAssignees([])
+      setMultiAssignMode('pool')
       setRecurrence('none')
       setRecurrenceTime('')
       setSelectedDays(['monday'])
@@ -219,44 +287,189 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated, family
             </div>
           </div>
 
-          {/* Allocation: Assign task to specific Parent, Kid, or Open for anyone */}
+          {/* Allocation: Toggle buttons to select one or multiple family members */}
           <div className="form-group">
-            <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-              <Users size={15} />
-              {t('tasks.field_assign_to')}
-            </label>
-            <div className="assignee-selector-grid">
-              <button
-                type="button"
-                className={`assignee-chip ${assignedTo === null ? 'active' : ''}`}
-                onClick={() => setAssignedTo(null)}
-              >
-                <span style={{ fontSize: '1.15rem' }}>🌟</span>
-                <div className="assignee-text">
-                  <strong>{t('tasks.assign_anyone')}</strong>
-                  <small>{t('tasks.assign_anyone_sub')}</small>
-                </div>
-              </button>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.45rem', flexWrap: 'wrap', gap: '0.4rem' }}>
+              <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', margin: 0 }}>
+                <Users size={15} />
+                {t('tasks.field_assign_to')}
+              </label>
 
+              {selectedAssignees.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedAssignees([])}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--text-dim)',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                    padding: 0,
+                  }}
+                >
+                  {t('tasks.assign_clear_selection')} ({selectedAssignees.length})
+                </button>
+              )}
+            </div>
+
+            {/* Toggle buttons for each family member */}
+            <div className="assignee-selector-grid">
               {familyMembers.map((member) => {
                 const isParentRole = member.role === 'parent'
-                const isSelected = assignedTo === member.id
+                const isSelected = selectedAssignees.includes(member.id)
                 return (
                   <button
                     key={member.id}
                     type="button"
                     className={`assignee-chip ${isSelected ? 'active' : ''}`}
-                    onClick={() => setAssignedTo(member.id)}
+                    onClick={() => toggleAssignee(member.id)}
+                    style={{ position: 'relative' }}
                   >
                     <span style={{ fontSize: '1.15rem' }}>{isParentRole ? '👑' : '🚀'}</span>
                     <div className="assignee-text">
                       <strong>{member.display_name}</strong>
                       <small>{isParentRole ? (isDutch ? 'Ouder' : 'Parent') : (isDutch ? 'Kind' : 'Kid')}</small>
                     </div>
+                    {isSelected && (
+                      <div
+                        style={{
+                          marginLeft: 'auto',
+                          background: 'var(--theme-accent, var(--discord-blurple))',
+                          color: '#ffffff',
+                          borderRadius: '50%',
+                          width: '20px',
+                          height: '20px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <Check size={13} strokeWidth={3} />
+                      </div>
+                    )}
                   </button>
                 )
               })}
             </div>
+
+            {/* Helpful indicator when no one is selected */}
+            {selectedAssignees.length === 0 ? (
+              <div
+                style={{
+                  marginTop: '0.65rem',
+                  padding: '0.65rem 0.85rem',
+                  borderRadius: '10px',
+                  background: 'var(--bg-surface-elevated)',
+                  border: '1px dashed var(--border-subtle)',
+                  fontSize: '0.82rem',
+                  color: 'var(--text-muted)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                }}
+              >
+                <span>🌟</span>
+                <span>{t('tasks.assign_open_for_all')}</span>
+              </div>
+            ) : null}
+
+            {/* Multi-person Distribution Mode Toggle when 2 or more members are selected */}
+            {selectedAssignees.length > 1 && (
+              <div
+                style={{
+                  marginTop: '0.75rem',
+                  padding: '0.85rem',
+                  borderRadius: '14px',
+                  background: 'var(--bg-surface-elevated)',
+                  border: '1.5px solid var(--border-subtle)',
+                }}
+              >
+                <span
+                  style={{
+                    display: 'block',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    color: 'var(--text-pure)',
+                    marginBottom: '0.6rem',
+                  }}
+                >
+                  {t('tasks.multi_assign_mode_title')}
+                </span>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
+                  {/* Option 1: Shared pool (first to claim) */}
+                  <button
+                    type="button"
+                    onClick={() => setMultiAssignMode('pool')}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.25rem',
+                      padding: '0.65rem 0.75rem',
+                      borderRadius: '12px',
+                      border: multiAssignMode === 'pool'
+                        ? '2px solid var(--theme-accent, var(--discord-blurple))'
+                        : '1px solid var(--border-subtle)',
+                      background: multiAssignMode === 'pool'
+                        ? 'var(--theme-accent-glow, rgba(99, 102, 241, 0.12))'
+                        : 'var(--bg-surface)',
+                      color: 'var(--text-pure)',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <strong style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <Users size={14} />
+                        {t('tasks.multi_mode_pool')}
+                      </strong>
+                      {multiAssignMode === 'pool' && <Check size={14} color="var(--theme-accent, var(--discord-blurple))" />}
+                    </div>
+                    <small style={{ fontSize: '0.73rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>
+                      {t('tasks.multi_mode_pool_desc')}
+                    </small>
+                  </button>
+
+                  {/* Option 2: Individual separate task for each */}
+                  <button
+                    type="button"
+                    onClick={() => setMultiAssignMode('individual')}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.25rem',
+                      padding: '0.65rem 0.75rem',
+                      borderRadius: '12px',
+                      border: multiAssignMode === 'individual'
+                        ? '2px solid var(--theme-accent, var(--discord-blurple))'
+                        : '1px solid var(--border-subtle)',
+                      background: multiAssignMode === 'individual'
+                        ? 'var(--theme-accent-glow, rgba(99, 102, 241, 0.12))'
+                        : 'var(--bg-surface)',
+                      color: 'var(--text-pure)',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <strong style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <Copy size={14} />
+                        {t('tasks.multi_mode_individual')}
+                      </strong>
+                      {multiAssignMode === 'individual' && <Check size={14} color="var(--theme-accent, var(--discord-blurple))" />}
+                    </div>
+                    <small style={{ fontSize: '0.73rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>
+                      {t('tasks.multi_mode_individual_desc')}
+                    </small>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Recurrence Selector */}

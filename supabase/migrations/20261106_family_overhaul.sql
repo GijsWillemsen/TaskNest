@@ -52,6 +52,9 @@ CREATE TABLE public.tasks (
   due_date TIMESTAMPTZ DEFAULT NULL,
   assigned_to UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
   claimed_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  transfer_requested_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  transfer_requested_name TEXT DEFAULT NULL,
+  eligible_assignees JSONB DEFAULT NULL,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 

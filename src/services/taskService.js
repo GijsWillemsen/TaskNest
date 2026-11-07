@@ -82,6 +82,7 @@ export async function createTask({
   assigned_to = null,
   claimed_by = null,
   status = null,
+  eligible_assignees = null,
 }) {
   const points = parseInt(points_value, 10) || 10
   const assigneeId = assigned_to || claimed_by || null
@@ -95,6 +96,10 @@ export async function createTask({
     status: initialStatus,
     claimed_by: assigneeId,
     assigned_to: assigneeId,
+  }
+
+  if (eligible_assignees && Array.isArray(eligible_assignees) && eligible_assignees.length > 0) {
+    taskPayload.eligible_assignees = eligible_assignees
   }
 
   if (recurrence && recurrence !== 'none') {
@@ -111,7 +116,7 @@ export async function createTask({
     .single()
 
   if (error) {
-    // Fallback if recurrence or assigned_to columns haven't been migrated yet
+    // Fallback if recurrence, assigned_to or eligible_assignees columns haven't been migrated yet
     if (error.message && (error.message.includes('column') || error.message.includes('schema cache'))) {
       console.warn('Extended columns not found in database, inserting base task payload:', error.message)
       const { data: fallbackData, error: fallbackError } = await supabase
@@ -338,4 +343,73 @@ export async function deleteTask(taskId) {
   const { error } = await supabase.from('tasks').delete().eq('id', taskId)
   if (error) throw error
   return true
+}
+
+/**
+ * Request to take over / transfer a claimed task
+ */
+export async function requestTaskTransfer(taskId, requesterId, requesterName) {
+  const { data, error } = await supabase
+    .from('tasks')
+    .update({
+      transfer_requested_by: requesterId,
+      transfer_requested_name: requesterName,
+    })
+    .eq('id', taskId)
+    .eq('status', 'claimed')
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+/**
+ * Accept a pending task transfer request
+ */
+export async function acceptTaskTransfer(taskId) {
+  const { data: task, error: fetchErr } = await supabase
+    .from('tasks')
+    .select('*')
+    .eq('id', taskId)
+    .single()
+
+  if (fetchErr) throw fetchErr
+  if (!task.transfer_requested_by) {
+    throw new Error('Geen overnameverzoek gevonden.')
+  }
+
+  const newClaimant = task.transfer_requested_by
+
+  const { data, error } = await supabase
+    .from('tasks')
+    .update({
+      claimed_by: newClaimant,
+      transfer_requested_by: null,
+      transfer_requested_name: null,
+    })
+    .eq('id', taskId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+/**
+ * Decline or cancel a pending task transfer request
+ */
+export async function cancelTaskTransfer(taskId) {
+  const { data, error } = await supabase
+    .from('tasks')
+    .update({
+      transfer_requested_by: null,
+      transfer_requested_name: null,
+    })
+    .eq('id', taskId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
 }
