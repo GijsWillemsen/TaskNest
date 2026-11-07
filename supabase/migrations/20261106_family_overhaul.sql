@@ -50,6 +50,7 @@ CREATE TABLE public.tasks (
   recurrence_time TEXT DEFAULT NULL,
   recurrence_day TEXT DEFAULT NULL,
   due_date TIMESTAMPTZ DEFAULT NULL,
+  assigned_to UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
   claimed_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ DEFAULT now()
 );
