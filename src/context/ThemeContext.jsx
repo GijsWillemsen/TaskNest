@@ -24,11 +24,14 @@ export function ThemeProvider({ children }) {
       const themeColors = {
         candy: '#ffffff',
         playful: '#ffffff',
-        arcade: '#131b2e',
-        sunset: '#261642',
-        forest: '#142820',
-        obsidian: '#141416',
-        modern: '#141416',
+        blossom: '#ffffff',
+        citrus: '#ffffff',
+        breeze: '#ffffff',
+        arcade: '#080a12',
+        sunset: '#120c24',
+        forest: '#07140f',
+        obsidian: '#09090b',
+        modern: '#09090b',
       }
       metaThemeColor.setAttribute('content', themeColors[activeTheme] || '#141416')
     }

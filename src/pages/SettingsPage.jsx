@@ -441,7 +441,7 @@ export default function SettingsPage() {
                     {isSelected && <CheckCircle2 size={16} color="var(--theme-accent, var(--discord-blurple))" />}
                   </div>
                   <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>
-                    {themeOption.description}
+                    {isDutch ? themeOption.description : (themeOption.descriptionEn || themeOption.description)}
                   </p>
                 </div>
               </button>
