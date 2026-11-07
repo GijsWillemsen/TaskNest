@@ -724,24 +724,25 @@
 
 [data-theme='candy'] .input-field,
 [data-theme='playful'] .input-field {
-  background-color: #f0f9ff !important;
-  color: #1e1b4b !important;
+  background-color: #f0f7ff !important;
+  color: #0f172a !important;
   border: 2px solid #7c3aed !important;
   border-radius: 14px !important;
 }
 
 [data-theme='candy'] .input-field:focus,
 [data-theme='playful'] .input-field:focus {
-  background-color: #ffffff !important;
-  color: #1e1b4b !important;
+  background-color: #e0edf9 !important;
+  color: #0f172a !important;
   border-color: #581c87 !important;
-  box-shadow: 0 3px 0 #581c87 !important;
+  box-shadow: 0 3px 0 #581c87, 0 0 0 3px rgba(124, 58, 237, 0.22) !important;
+  outline: none !important;
 }
 
 [data-theme='candy'] .input-field::placeholder,
 [data-theme='playful'] .input-field::placeholder {
-  color: #8b5cf6 !important;
-  opacity: 0.65 !important;
+  color: #6b21a8 !important;
+  opacity: 0.7 !important;
 }
 
 [data-theme='playful'] .points-pill {

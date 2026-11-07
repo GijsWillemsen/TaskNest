@@ -3,7 +3,13 @@ import { useAuth } from '../context/useAuth'
 import { useTheme } from '../context/useTheme'
 import { useLanguage } from '../context/useLanguage'
 import { THEMES } from '../context/theme-context'
-import { getFamilyMembers } from '../services/familyService'
+import {
+  getFamilyMembers,
+  updateFamilyName,
+  adjustMemberPoints,
+  setMemberPoints,
+} from '../services/familyService'
+import Toast from '../components/common/Toast'
 import {
   User,
   Users,
@@ -17,21 +23,37 @@ import {
   CheckCircle2,
   Edit2,
   Globe,
+  SlidersHorizontal,
+  X,
 } from 'lucide-react'
 import '../styles/auth.css'
+import '../styles/tasks.css'
 
 export default function SettingsPage() {
-  const { user, family, familyId, role, points, displayName, signOut, updateDisplayName } = useAuth()
+  const { user, family, familyId, role, points, displayName, signOut, updateDisplayName, refreshProfile } = useAuth()
   const { theme, setTheme } = useTheme()
   const { t, lang, setLanguage, isDutch } = useLanguage()
   const [copied, setCopied] = useState(false)
   const [members, setMembers] = useState([])
   const [loadingMembers, setLoadingMembers] = useState(false)
+  const [toast, setToast] = useState({ message: '', type: 'error' })
 
   // Inline display name editing
   const [isEditingName, setIsEditingName] = useState(false)
   const [editNameVal, setEditNameVal] = useState(displayName || '')
   const [savingName, setSavingName] = useState(false)
+
+  // Inline family name editing
+  const [isEditingFamilyName, setIsEditingFamilyName] = useState(false)
+  const [editFamilyNameVal, setEditFamilyNameVal] = useState(family?.name || '')
+  const [savingFamilyName, setSavingFamilyName] = useState(false)
+
+  // Parent points management
+  const [adjustMember, setAdjustMember] = useState(null)
+  const [adjustMode, setAdjustMode] = useState('deduct') // 'deduct' | 'add' | 'set'
+  const [adjustAmount, setAdjustAmount] = useState(10)
+  const [adjustReason, setAdjustReason] = useState('')
+  const [adjustLoading, setAdjustLoading] = useState(false)
 
   const isParent = role === 'parent'
 
@@ -79,15 +101,93 @@ export default function SettingsPage() {
     try {
       await updateDisplayName(editNameVal.trim())
       setIsEditingName(false)
+      setToast({ message: t('settings.name_saved'), type: 'success' })
     } catch (err) {
       console.error('Failed to update name:', err)
+      setToast({ message: isDutch ? 'Kon weergavenaam niet bijwerken.' : 'Failed to update name.', type: 'error' })
     } finally {
       setSavingName(false)
     }
   }
 
+  const handleSaveFamilyName = async (e) => {
+    e.preventDefault()
+    const clean = editFamilyNameVal.trim()
+    if (!clean || !familyId) return
+    setSavingFamilyName(true)
+    try {
+      await updateFamilyName(familyId, clean)
+      if (refreshProfile) {
+        await refreshProfile()
+      }
+      setIsEditingFamilyName(false)
+      setToast({ message: t('settings.family_name_saved'), type: 'success' })
+    } catch (err) {
+      console.error('Failed to update family name:', err)
+      setToast({ message: isDutch ? 'Kon familienaam niet bijwerken.' : 'Failed to update family name.', type: 'error' })
+    } finally {
+      setSavingFamilyName(false)
+    }
+  }
+
+  const handleConfirmAdjustPoints = async () => {
+    if (!adjustMember) return
+    const num = parseInt(adjustAmount, 10)
+    if (isNaN(num) || num < 0) {
+      setToast({ message: isDutch ? 'Vul een geldig puntenaantal in.' : 'Please enter a valid points amount.', type: 'error' })
+      return
+    }
+
+    setAdjustLoading(true)
+    try {
+      let updatedProfile = null
+      if (adjustMode === 'set') {
+        updatedProfile = await setMemberPoints(adjustMember.id, num)
+      } else {
+        const delta = adjustMode === 'deduct' ? -num : num
+        updatedProfile = await adjustMemberPoints(adjustMember.id, delta)
+      }
+
+      const newBalance = updatedProfile?.points ?? 0
+
+      // Update local members list immediately
+      setMembers((prev) =>
+        prev.map((m) => (m.id === adjustMember.id ? { ...m, points: newBalance } : m))
+      )
+
+      // If user modified their own points, refresh their header balance
+      if (adjustMember.id === user?.id && refreshProfile) {
+        await refreshProfile()
+      }
+
+      setToast({
+        message: t('settings.points_adjusted_succ').replace('{name}', adjustMember.display_name || adjustMember.role),
+        type: 'success',
+      })
+      setAdjustMember(null)
+      setAdjustReason('')
+    } catch (err) {
+      console.error('Failed to adjust member points:', err)
+      setToast({
+        message: isDutch ? 'Kon punten niet bijwerken.' : 'Failed to adjust points.',
+        type: 'error',
+      })
+    } finally {
+      setAdjustLoading(false)
+    }
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', width: '100%', maxWidth: '780px', margin: '0 auto' }}>
+      {/* Toast Alert */}
+      {toast.message && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ message: '', type: 'error' })}
+        />
+      )}
+
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
         <div>
@@ -356,10 +456,74 @@ export default function SettingsPage() {
           <div className="placeholder-icon family" style={{ background: 'rgba(254, 231, 92, 0.15)', color: 'var(--discord-yellow)' }}>
             <Users size={22} />
           </div>
-          <div>
-            <h2 style={{ fontSize: '1.1rem', margin: 0 }}>
-              {family?.name || t('nav.family_nest')}
-            </h2>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {isEditingFamilyName ? (
+              <form onSubmit={handleSaveFamilyName} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                <input
+                  type="text"
+                  value={editFamilyNameVal}
+                  onChange={(e) => setEditFamilyNameVal(e.target.value)}
+                  className="input-field"
+                  style={{ padding: '0.4rem 0.75rem', fontSize: '0.95rem', width: '200px' }}
+                  autoFocus
+                />
+                <button
+                  type="submit"
+                  disabled={savingFamilyName}
+                  style={{
+                    background: 'var(--discord-green)',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '0.45rem',
+                    color: '#090a0f',
+                    cursor: 'pointer',
+                  }}
+                  title={t('common.save')}
+                >
+                  <Check size={16} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsEditingFamilyName(false)}
+                  style={{
+                    background: 'none',
+                    border: '1px solid var(--border-subtle)',
+                    borderRadius: '8px',
+                    padding: '0.45rem',
+                    color: 'var(--text-dim)',
+                    cursor: 'pointer',
+                  }}
+                  title={t('common.cancel')}
+                >
+                  <X size={16} />
+                </button>
+              </form>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <h2 style={{ fontSize: '1.1rem', margin: 0, color: 'var(--text-pure)' }}>
+                  {family?.name || t('nav.family_nest')}
+                </h2>
+                {isParent && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditFamilyNameVal(family?.name || '')
+                      setIsEditingFamilyName(true)
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--text-dim)',
+                      cursor: 'pointer',
+                      padding: '2px',
+                    }}
+                    title={t('settings.edit_family_name')}
+                  >
+                    <Edit2 size={14} />
+                  </button>
+                )}
+              </div>
+            )}
             <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
               {t('settings.invite_code_desc')}
             </span>
@@ -454,6 +618,8 @@ export default function SettingsPage() {
                       background: 'var(--bg-surface-elevated)',
                       border: '1px solid var(--border-subtle)',
                       borderRadius: '12px',
+                      flexWrap: 'wrap',
+                      gap: '0.5rem',
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
@@ -470,9 +636,40 @@ export default function SettingsPage() {
                       </span>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--discord-yellow)', fontWeight: 800, fontSize: '0.92rem' }}>
-                      <Coins size={16} />
-                      <span>{m.points}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--discord-yellow)', fontWeight: 800, fontSize: '0.92rem' }}>
+                        <Coins size={16} />
+                        <span>{m.points}</span>
+                      </div>
+
+                      {isParent && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAdjustMember(m)
+                            setAdjustMode('deduct')
+                            setAdjustAmount(10)
+                            setAdjustReason('')
+                          }}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                            padding: '0.35rem 0.65rem',
+                            borderRadius: '8px',
+                            background: 'var(--bg-surface)',
+                            border: '1px solid var(--border-subtle)',
+                            color: 'var(--text-pure)',
+                            fontSize: '0.78rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                          }}
+                          title={t('settings.manage_points')}
+                        >
+                          <SlidersHorizontal size={13} />
+                          <span>{isDutch ? 'Punten Beheren' : 'Manage Points'}</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -481,6 +678,191 @@ export default function SettingsPage() {
           </div>
         )}
       </div>
+
+      {/* Parent Manage Points Modal */}
+      {adjustMember && (
+        <div className="modal-backdrop" onClick={() => !adjustLoading && setAdjustMember(null)}>
+          <div
+            className="modal-card"
+            style={{ maxWidth: '440px', width: '92%' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-pure)' }}>
+                {t('settings.adjust_points_title')} {adjustMember.display_name || (adjustMember.role === 'parent' ? t('common.parent') : t('common.kid'))}
+              </h3>
+              <button
+                type="button"
+                onClick={() => !adjustLoading && setAdjustMember(null)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-dim)', cursor: 'pointer' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div style={{ marginBottom: '1rem' }}>
+              <div style={{ marginBottom: '0.85rem', fontSize: '0.88rem', color: 'var(--text-muted)' }}>
+                {isDutch ? 'Huidig saldo:' : 'Current balance:'}{' '}
+                <strong style={{ color: 'var(--discord-yellow)' }}>{adjustMember.points} {t('common.points')}</strong>
+              </div>
+
+              {/* Mode Selector */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', marginBottom: '1.15rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setAdjustMode('deduct')}
+                  style={{
+                    padding: '0.55rem 0.4rem',
+                    borderRadius: '10px',
+                    border: adjustMode === 'deduct' ? '2px solid var(--discord-red)' : '1px solid var(--border-subtle)',
+                    background: adjustMode === 'deduct' ? 'rgba(248, 113, 113, 0.15)' : 'var(--bg-surface)',
+                    color: adjustMode === 'deduct' ? 'var(--discord-red)' : 'var(--text-muted)',
+                    fontWeight: 700,
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {t('settings.points_operation_deduct')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAdjustMode('add')}
+                  style={{
+                    padding: '0.55rem 0.4rem',
+                    borderRadius: '10px',
+                    border: adjustMode === 'add' ? '2px solid var(--discord-green)' : '1px solid var(--border-subtle)',
+                    background: adjustMode === 'add' ? 'rgba(52, 211, 153, 0.15)' : 'var(--bg-surface)',
+                    color: adjustMode === 'add' ? 'var(--discord-green)' : 'var(--text-muted)',
+                    fontWeight: 700,
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {t('settings.points_operation_add')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAdjustMode('set')}
+                  style={{
+                    padding: '0.55rem 0.4rem',
+                    borderRadius: '10px',
+                    border: adjustMode === 'set' ? '2px solid var(--theme-accent, var(--discord-blurple))' : '1px solid var(--border-subtle)',
+                    background: adjustMode === 'set' ? 'var(--theme-accent-glow, rgba(99, 102, 241, 0.15))' : 'var(--bg-surface)',
+                    color: adjustMode === 'set' ? 'var(--theme-accent, var(--discord-blurple))' : 'var(--text-muted)',
+                    fontWeight: 700,
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {t('settings.points_operation_set')}
+                </button>
+              </div>
+
+              {/* Amount Input */}
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.4rem' }}>
+                  {adjustMode === 'set' ? (isDutch ? 'Nieuw saldo in punten' : 'New point balance') : (isDutch ? 'Aantal punten' : 'Number of points')}
+                </label>
+                <div className="points-input-group" style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <input
+                    type="number"
+                    min="0"
+                    max="9999"
+                    className="input-field modal-input points-number-input"
+                    value={adjustAmount}
+                    onChange={(e) => {
+                      const raw = e.target.value
+                      if (raw === '') {
+                        setAdjustAmount('')
+                      } else {
+                        const num = parseInt(raw, 10)
+                        if (!isNaN(num)) setAdjustAmount(Math.max(0, num))
+                      }
+                    }}
+                    onBlur={() => {
+                      if (adjustAmount === '' || isNaN(Number(adjustAmount))) {
+                        setAdjustAmount(adjustMode === 'set' ? 0 : 10)
+                      }
+                    }}
+                    style={{ width: '100px' }}
+                  />
+
+                  <div className="quick-points-pills" style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                    {[5, 10, 20, 50, 100].map((pillVal) => (
+                      <button
+                        key={pillVal}
+                        type="button"
+                        className="quick-point-btn"
+                        onClick={() => setAdjustAmount(pillVal)}
+                        style={{
+                          background: adjustAmount === pillVal ? 'var(--bg-surface-hover)' : 'var(--bg-surface-elevated)',
+                          fontWeight: 700,
+                        }}
+                      >
+                        {adjustMode === 'deduct' ? `-${pillVal}` : `+${pillVal}`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Optional Note */}
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.4rem' }}>
+                  {t('settings.points_reason_label')}
+                </label>
+                <input
+                  type="text"
+                  className="input-field modal-input"
+                  placeholder={t('settings.points_reason_placeholder')}
+                  value={adjustReason}
+                  onChange={(e) => setAdjustReason(e.target.value)}
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  className="modal-btn-cancel"
+                  onClick={() => setAdjustMember(null)}
+                  disabled={adjustLoading}
+                >
+                  {t('common.cancel')}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmAdjustPoints}
+                  disabled={adjustLoading}
+                  style={{
+                    padding: '0.65rem 1.25rem',
+                    borderRadius: '12px',
+                    border: 'none',
+                    fontWeight: 800,
+                    fontSize: '0.9rem',
+                    cursor: 'pointer',
+                    background:
+                      adjustMode === 'deduct'
+                        ? 'var(--discord-red)'
+                        : adjustMode === 'add'
+                        ? 'var(--discord-green)'
+                        : 'var(--theme-accent, var(--discord-blurple))',
+                    color: '#ffffff',
+                  }}
+                >
+                  {adjustLoading
+                    ? t('common.loading')
+                    : adjustMode === 'deduct'
+                    ? `${adjustAmount || 0} ${isDutch ? 'Punten Aftrekken' : 'Points Deduct'}`
+                    : adjustMode === 'add'
+                    ? `${adjustAmount || 0} ${isDutch ? 'Punten Toevoegen' : 'Points Add'}`
+                    : `${isDutch ? 'Opslaan als' : 'Set to'} ${adjustAmount || 0} pts`}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Clean Footer */}
       <div style={{ textAlign: 'center', padding: '0.75rem 0', color: 'var(--text-dim)', fontSize: '0.8rem' }}>

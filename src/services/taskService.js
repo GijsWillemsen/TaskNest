@@ -281,6 +281,57 @@ export async function approveTask(taskId, claimantId, pointsValue) {
 }
 
 /**
+ * Parent reverts a completed or pending task (e.g. if the kid cheated or didn't complete it).
+ * 1. If task was marked 'completed' and had awarded points, deducts the points from the claimant.
+ * 2. Resets task status back to 'open' (or 'claimed' if assigned_to is set).
+ */
+export async function revertTask(taskId) {
+  // 1. Fetch current task details
+  const { data: task, error: fetchErr } = await supabase
+    .from('tasks')
+    .select('*')
+    .eq('id', taskId)
+    .single()
+
+  if (fetchErr) throw fetchErr
+
+  // 2. If it was completed, deduct points from the claimant
+  if (task.status === 'completed' && task.claimed_by && task.points_value) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('points')
+      .eq('id', task.claimed_by)
+      .maybeSingle()
+
+    if (profile) {
+      const newPoints = Math.max(0, (profile.points || 0) - Number(task.points_value))
+      await supabase
+        .from('profiles')
+        .update({ points: newPoints })
+        .eq('id', task.claimed_by)
+    }
+  }
+
+  // 3. Reset task to open (or claimed if assigned_to is set)
+  const isAssigned = Boolean(task.assigned_to)
+  const resetStatus = isAssigned ? 'claimed' : 'open'
+  const resetClaimant = isAssigned ? task.assigned_to : null
+
+  const { data: updatedTask, error: updateErr } = await supabase
+    .from('tasks')
+    .update({
+      status: resetStatus,
+      claimed_by: resetClaimant,
+    })
+    .eq('id', taskId)
+    .select()
+    .single()
+
+  if (updateErr) throw updateErr
+  return updatedTask
+}
+
+/**
  * Delete a task
  */
 export async function deleteTask(taskId) {

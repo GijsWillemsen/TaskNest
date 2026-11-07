@@ -67,7 +67,20 @@ export default function BonusPointsModal({
                 max="500"
                 className="input-field modal-input points-number-input"
                 value={points}
-                onChange={(e) => setPoints(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                onChange={(e) => {
+                  const raw = e.target.value
+                  if (raw === '') {
+                    setPoints('')
+                  } else {
+                    const num = parseInt(raw, 10)
+                    if (!isNaN(num)) setPoints(num)
+                  }
+                }}
+                onBlur={() => {
+                  if (!points || Number(points) < 1) {
+                    setPoints(10)
+                  }
+                }}
               />
               <div className="quick-points-pills">
                 {[5, 10, 15, 25, 50].map((val) => (
