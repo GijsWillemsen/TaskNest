@@ -25,6 +25,8 @@ import {
   Globe,
   SlidersHorizontal,
   X,
+  Sun,
+  Moon,
 } from 'lucide-react'
 import '../styles/auth.css'
 import '../styles/tasks.css'
@@ -438,7 +440,14 @@ export default function SettingsPage() {
                     <strong style={{ color: 'var(--text-pure)', fontSize: '0.92rem' }}>
                       {themeOption.name}
                     </strong>
-                    {isSelected && <CheckCircle2 size={16} color="var(--theme-accent, var(--discord-blurple))" />}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      {themeOption.mode === 'light' ? (
+                        <Sun size={15} color="#f59e0b" />
+                      ) : (
+                        <Moon size={15} color="var(--theme-accent, var(--discord-blurple))" />
+                      )}
+                      {isSelected && <CheckCircle2 size={16} color="var(--theme-accent, var(--discord-blurple))" />}
+                    </div>
                   </div>
                   <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>
                     {isDutch ? themeOption.description : (themeOption.descriptionEn || themeOption.description)}

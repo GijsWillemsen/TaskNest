@@ -34,7 +34,7 @@ export default function RewardRequestCard({
       const updated = await redeemRewardTicket(request.id)
       celebrateTicketUsed()
       setIsCelebrated(true)
-      setFloatingBadge({ text: isDutch ? '🎟️ Kaartje Ingelost! ⏳' : '🎟️ Ticket Submitted! ⏳', type: 'ticket-bought' })
+      setFloatingBadge({ text: isDutch ? 'Kaartje Ingelost!' : 'Ticket Submitted!', type: 'ticket-bought' })
       setTimeout(() => {
         setIsCelebrated(false)
         setFloatingBadge(null)
@@ -42,8 +42,8 @@ export default function RewardRequestCard({
       if (onRequestUpdated) onRequestUpdated(updated)
       if (onSuccess) {
         onSuccess(isDutch
-          ? `🎟️ Kaartje ingezet voor "${reward.title}"! Wachten op goedkeuring van ouder.`
-          : `🎟️ Ticket submitted for "${reward.title}"! Waiting for parent approval.`
+          ? `Kaartje ingezet voor "${reward.title}"! Wachten op goedkeuring van ouder.`
+          : `Ticket submitted for "${reward.title}"! Waiting for parent approval.`
         )
       }
     } catch (err) {
@@ -65,7 +65,7 @@ export default function RewardRequestCard({
       const res = await approveRewardTicket(request.id)
       celebrateTicketUsed()
       setIsCelebrated(true)
-      setFloatingBadge({ text: isDutch ? '🎉 Veel Plezier!' : '🎉 Enjoy!', type: 'ticket-bought' })
+      setFloatingBadge({ text: isDutch ? 'Veel Plezier!' : 'Enjoy!', type: 'ticket-bought' })
       setTimeout(() => {
         setIsCelebrated(false)
         setFloatingBadge(null)

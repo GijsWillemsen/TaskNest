@@ -1,5 +1,20 @@
 import { useState } from 'react'
-import { X, Plus, RotateCw, Clock, Calendar, Users, Check, Copy } from 'lucide-react'
+import {
+  X,
+  Plus,
+  RotateCw,
+  Clock,
+  Calendar,
+  Users,
+  Check,
+  Copy,
+  Crown,
+  Smile,
+  Pin,
+  CalendarDays,
+  CalendarRange,
+  Sun,
+} from 'lucide-react'
 import { createTask } from '../../services/taskService'
 import { useLanguage } from '../../context/useLanguage'
 
@@ -22,20 +37,20 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated, family
 
   const presets = isDutch
     ? [
-        { title: 'Slaapkamer opruimen 🛏️', description: 'Bed opmaken, kleren opruimen, bureau netjes', points: 15, rec: 'daily', time: '10:00' },
-        { title: 'Vaatwasser uitruimen 🍽️', description: 'Vaatwasser inruimen of uitruimen', points: 20, rec: 'daily', time: '18:00' },
-        { title: 'Vuilnis buiten zetten 🗑️', description: 'Prullenbakken legen en containers aan de straat', points: 10, rec: 'weekly', days: ['tuesday'], time: '19:00' },
-        { title: 'Huiswerk afronden 📚', description: 'Alle opdrachten en leerwerk voor school afmaken', points: 25, rec: 'weekly', days: WEEKDAYS, time: '16:00' },
-        { title: 'Hond uitlaten 🐕', description: '15 minuten wandelen en bak vers water geven', points: 15, rec: 'daily', time: '17:00' },
-        { title: 'Woonkamer stofzuigen 🧹', description: 'Vloerkleed zuigen en hal vegen', points: 20, rec: 'weekly', days: ['saturday'], time: '11:00' },
+        { title: 'Slaapkamer opruimen', description: 'Bed opmaken, kleren opruimen, bureau netjes', points: 15, rec: 'daily', time: '10:00' },
+        { title: 'Vaatwasser uitruimen', description: 'Vaatwasser inruimen of uitruimen', points: 20, rec: 'daily', time: '18:00' },
+        { title: 'Vuilnis buiten zetten', description: 'Prullenbakken legen en containers aan de straat', points: 10, rec: 'weekly', days: ['tuesday'], time: '19:00' },
+        { title: 'Huiswerk afronden', description: 'Alle opdrachten en leerwerk voor school afmaken', points: 25, rec: 'weekly', days: WEEKDAYS, time: '16:00' },
+        { title: 'Hond uitlaten', description: '15 minuten wandelen en bak vers water geven', points: 15, rec: 'daily', time: '17:00' },
+        { title: 'Woonkamer stofzuigen', description: 'Vloerkleed zuigen en hal vegen', points: 20, rec: 'weekly', days: ['saturday'], time: '11:00' },
       ]
     : [
-        { title: 'Clean Bedroom 🛏️', description: 'Make bed, pick up clothes, tidy desk', points: 15, rec: 'daily', time: '10:00' },
-        { title: 'Wash Dishes 🍽️', description: 'Load/unload dishwasher or wash sink dishes', points: 20, rec: 'daily', time: '18:00' },
-        { title: 'Take Out Trash 🗑️', description: 'Empty room bins and take trash to the curb', points: 10, rec: 'weekly', days: ['tuesday'], time: '19:00' },
-        { title: 'Finish Homework 📚', description: 'Complete all assignments for school tomorrow', points: 25, rec: 'weekly', days: WEEKDAYS, time: '16:00' },
-        { title: 'Walk / Feed Pet 🐕', description: 'Take pet for a 15-minute walk and refill bowl', points: 15, rec: 'daily', time: '17:00' },
-        { title: 'Vacuum Living Room 🧹', description: 'Vacuum rug and sweep entryway', points: 20, rec: 'weekly', days: ['saturday'], time: '11:00' },
+        { title: 'Clean Bedroom', description: 'Make bed, pick up clothes, tidy desk', points: 15, rec: 'daily', time: '10:00' },
+        { title: 'Wash Dishes', description: 'Load/unload dishwasher or wash sink dishes', points: 20, rec: 'daily', time: '18:00' },
+        { title: 'Take Out Trash', description: 'Empty room bins and take trash to the curb', points: 10, rec: 'weekly', days: ['tuesday'], time: '19:00' },
+        { title: 'Finish Homework', description: 'Complete all assignments for school tomorrow', points: 25, rec: 'weekly', days: WEEKDAYS, time: '16:00' },
+        { title: 'Walk / Feed Pet', description: 'Take pet for a 15-minute walk and refill bowl', points: 15, rec: 'daily', time: '17:00' },
+        { title: 'Vacuum Living Room', description: 'Vacuum rug and sweep entryway', points: 20, rec: 'weekly', days: ['saturday'], time: '11:00' },
       ]
 
   if (!isOpen) return null
@@ -327,7 +342,9 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated, family
                     onClick={() => toggleAssignee(member.id)}
                     style={{ position: 'relative' }}
                   >
-                    <span style={{ fontSize: '1.15rem' }}>{isParentRole ? '👑' : '🚀'}</span>
+                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                      {isParentRole ? <Crown size={18} color="var(--discord-blurple)" /> : <Smile size={18} color="var(--discord-yellow)" />}
+                    </span>
                     <div className="assignee-text">
                       <strong>{member.display_name}</strong>
                       <small>{isParentRole ? (isDutch ? 'Ouder' : 'Parent') : (isDutch ? 'Kind' : 'Kid')}</small>
@@ -480,11 +497,11 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated, family
             </label>
             <div className="recurrence-grid">
               {[
-                { id: 'none', label: t('tasks.recurrence_none'), icon: '📌' },
-                { id: 'weekly', label: t('tasks.recurrence_weekly'), icon: '📅' },
-                { id: 'daily', label: t('tasks.recurrence_daily'), icon: '☀️' },
-                { id: 'monthly', label: t('tasks.recurrence_monthly'), icon: '🗓️' },
-                { id: 'yearly', label: t('tasks.recurrence_yearly'), icon: '🎂' },
+                { id: 'none', label: t('tasks.recurrence_none'), icon: <Pin size={18} /> },
+                { id: 'daily', label: t('tasks.recurrence_daily'), icon: <Sun size={18} /> },
+                { id: 'weekly', label: t('tasks.recurrence_weekly'), icon: <Calendar size={18} /> },
+                { id: 'monthly', label: t('tasks.recurrence_monthly'), icon: <CalendarDays size={18} /> },
+                { id: 'yearly', label: t('tasks.recurrence_yearly'), icon: <CalendarRange size={18} /> },
               ].map((item) => (
                 <button
                   key={item.id}
@@ -492,7 +509,7 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated, family
                   className={`recurrence-choice-btn ${recurrence === item.id ? 'active' : ''}`}
                   onClick={() => handleRecurrenceChange(item.id)}
                 >
-                  <span style={{ fontSize: '1.05rem' }}>{item.icon}</span>
+                  <span style={{ display: 'flex', alignItems: 'center' }}>{item.icon}</span>
                   <span>{item.label}</span>
                 </button>
               ))}

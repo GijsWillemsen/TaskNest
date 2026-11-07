@@ -42,7 +42,7 @@ export default function RewardCard({
       const ticket = res.ticket || res
       celebrateRewardPurchase()
       setIsCelebrated(true)
-      setFloatingBadge({ text: `🎟️ -${reward.cost} ${t('common.points')}!`, type: 'ticket-bought' })
+      setFloatingBadge({ text: `-${reward.cost} ${t('common.points')}!`, type: 'ticket-bought' })
       setTimeout(() => {
         setIsCelebrated(false)
         setFloatingBadge(null)
@@ -54,8 +54,8 @@ export default function RewardCard({
 
       // Prompt: Use now or keep for later?
       const useNowQuestion = isDutch
-        ? `🎉 Kaartje gekocht voor "${reward.title}"!\n\nWil je dit kaartje NU METEEN gebruiken?\n(Klik OK voor "Nu gebruiken", of Annuleren voor "Bewaar voor later")`
-        : `🎉 Ticket purchased for "${reward.title}"!\n\nDo you want to USE this ticket RIGHT NOW?\n(Click OK for "Use Now", or Cancel for "Keep for Later")`
+        ? `Kaartje gekocht voor "${reward.title}"!\n\nWil je dit kaartje nu meteen gebruiken?\n(Klik OK voor "Nu gebruiken", of Annuleren voor "Bewaar voor later")`
+        : `Ticket purchased for "${reward.title}"!\n\nDo you want to use this ticket right now?\n(Click OK for "Use Now", or Cancel for "Keep for Later")`
 
       if (window.confirm(useNowQuestion)) {
         celebrateTicketUsed()
@@ -65,8 +65,8 @@ export default function RewardCard({
         }
         if (onSuccess) {
           onSuccess(isDutch
-            ? `🎟️ Kaartje voor "${reward.title}" ingezet! Wachten op goedkeuring van ouder.`
-            : `🎟️ Ticket for "${reward.title}" submitted! Waiting for parent approval.`
+            ? `Kaartje voor "${reward.title}" ingezet! Wachten op goedkeuring van ouder.`
+            : `Ticket for "${reward.title}" submitted! Waiting for parent approval.`
           )
         }
       } else {

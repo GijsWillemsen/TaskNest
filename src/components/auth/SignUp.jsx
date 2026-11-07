@@ -20,6 +20,11 @@ import {
   CheckCircle2,
   Crown,
   Smile,
+  Sun,
+  Moon,
+  Languages,
+  Globe,
+  PartyPopper,
 } from 'lucide-react'
 import '../../styles/auth.css'
 import { celebrateOnboardingFinish } from '../../utils/confetti'
@@ -42,7 +47,6 @@ export default function SignUp() {
 
   // Step 3: Theme Selection
   const [themeChoice, setThemeChoice] = useState('candy')
-  const [themeFilter, setThemeFilter] = useState('all') // 'all', 'light', 'dark'
 
   // Step 4: Account Credentials & Family Setup
   const [email, setEmail] = useState('')
@@ -223,21 +227,14 @@ export default function SignUp() {
     }
   }
 
-  // Filtered themes for Step 3
-  const visibleThemes = THEMES.filter((th) => {
-    if (themeFilter === 'light') return th.mode === 'light'
-    if (themeFilter === 'dark') return th.mode === 'dark'
-    return true
-  })
-
   return (
     <div className="auth-page">
       <div className="auth-card" style={{ maxWidth: '480px' }}>
         {finishedOnboarding && (
           <div className="onboarding-celebration-overlay">
             <div className="onboarding-celebration-box anim-celebrate-card">
-              <div style={{ fontSize: '3.2rem', marginBottom: '0.4rem', animation: 'celebrate-bounce 0.8s infinite alternate' }}>
-                🎉
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.75rem', animation: 'celebrate-bounce 0.8s infinite alternate' }}>
+                <PartyPopper size={52} color="var(--discord-yellow, #f59e0b)" />
               </div>
               <h2 style={{ fontSize: '1.45rem', margin: '0 0 0.5rem 0', color: 'var(--text-pure)' }}>
                 {isDutch ? 'Hoera! Je nest is klaar!' : 'Hooray! Your nest is ready!'}
@@ -300,12 +297,12 @@ export default function SignUp() {
                   type="button"
                   className={`role-card-btn ${lang === 'nl' ? 'active-parent' : ''}`}
                   onClick={() => setLanguage('nl')}
+                  style={{ minHeight: '120px' }}
                 >
-                  <div className="role-icon-wrapper" style={{ fontSize: '1.8rem', background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.35)' }}>
-                    🇳🇱
+                  <div className="role-icon-wrapper" style={{ background: 'rgba(99, 102, 241, 0.15)', color: 'var(--theme-accent, var(--discord-blurple))' }}>
+                    <Languages size={24} />
                   </div>
-                  <span className="role-name">{t('auth.lang_dutch_label')}</span>
-                  <span className="role-desc">{t('auth.lang_dutch_desc')}</span>
+                  <span className="role-name" style={{ margin: 0 }}>{t('auth.lang_dutch_label')}</span>
                   {lang === 'nl' && (
                     <div style={{ marginTop: '0.45rem' }}>
                       <CheckCircle2 size={16} color="var(--theme-accent, var(--discord-blurple))" />
@@ -317,12 +314,12 @@ export default function SignUp() {
                   type="button"
                   className={`role-card-btn ${lang === 'en' ? 'active-parent' : ''}`}
                   onClick={() => setLanguage('en')}
+                  style={{ minHeight: '120px' }}
                 >
-                  <div className="role-icon-wrapper" style={{ fontSize: '1.8rem', background: 'rgba(59, 130, 246, 0.12)', border: '1px solid rgba(59, 130, 246, 0.35)' }}>
-                    🇬🇧
+                  <div className="role-icon-wrapper" style={{ background: 'rgba(6, 182, 212, 0.15)', color: 'var(--discord-teal, #06b6d4)' }}>
+                    <Globe size={24} />
                   </div>
-                  <span className="role-name">{t('auth.lang_english_label')}</span>
-                  <span className="role-desc">{t('auth.lang_english_desc')}</span>
+                  <span className="role-name" style={{ margin: 0 }}>{t('auth.lang_english_label')}</span>
                   {lang === 'en' && (
                     <div style={{ marginTop: '0.45rem' }}>
                       <CheckCircle2 size={16} color="var(--theme-accent, var(--discord-blurple))" />
@@ -424,86 +421,18 @@ export default function SignUp() {
             <div className="form-group">
               <label className="form-label">{t('auth.choose_theme_sub')}</label>
 
-              {/* Light / Dark Filter Tabs */}
-              <div
-                style={{
-                  display: 'flex',
-                  gap: '0.35rem',
-                  marginBottom: '0.75rem',
-                  background: 'var(--bg-surface-elevated)',
-                  padding: '3px',
-                  borderRadius: '12px',
-                  border: '1px solid var(--border-subtle)',
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={() => setThemeFilter('all')}
-                  style={{
-                    flex: 1,
-                    padding: '0.4rem',
-                    borderRadius: '8px',
-                    border: 'none',
-                    background: themeFilter === 'all' ? 'var(--theme-accent, var(--discord-blurple))' : 'transparent',
-                    color: themeFilter === 'all' ? '#ffffff' : 'var(--text-muted)',
-                    fontWeight: 700,
-                    fontSize: '0.8rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                  }}
-                >
-                  {t('auth.filter_all_themes')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setThemeFilter('light')}
-                  style={{
-                    flex: 1,
-                    padding: '0.4rem',
-                    borderRadius: '8px',
-                    border: 'none',
-                    background: themeFilter === 'light' ? 'var(--theme-accent, var(--discord-blurple))' : 'transparent',
-                    color: themeFilter === 'light' ? '#ffffff' : 'var(--text-muted)',
-                    fontWeight: 700,
-                    fontSize: '0.8rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                  }}
-                >
-                  {t('auth.filter_light_themes')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setThemeFilter('dark')}
-                  style={{
-                    flex: 1,
-                    padding: '0.4rem',
-                    borderRadius: '8px',
-                    border: 'none',
-                    background: themeFilter === 'dark' ? 'var(--theme-accent, var(--discord-blurple))' : 'transparent',
-                    color: themeFilter === 'dark' ? '#ffffff' : 'var(--text-muted)',
-                    fontWeight: 700,
-                    fontSize: '0.8rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                  }}
-                >
-                  {t('auth.filter_dark_themes')}
-                </button>
-              </div>
-
               {/* Theme Cards List */}
               <div
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '0.65rem',
-                  maxHeight: '340px',
+                  maxHeight: '380px',
                   overflowY: 'auto',
                   paddingRight: '4px',
                 }}
               >
-                {visibleThemes.map((th) => {
+                {THEMES.map((th) => {
                   const isSelected = themeChoice === th.id
                   return (
                     <div
@@ -550,19 +479,12 @@ export default function SignUp() {
                           <strong style={{ color: 'var(--text-pure)', fontSize: '0.94rem' }}>
                             {th.name}
                           </strong>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            <span
-                              style={{
-                                fontSize: '0.7rem',
-                                padding: '2px 6px',
-                                borderRadius: '6px',
-                                background: th.mode === 'light' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(99, 102, 241, 0.15)',
-                                color: th.mode === 'light' ? 'var(--discord-yellow)' : 'var(--theme-accent)',
-                                fontWeight: 700,
-                              }}
-                            >
-                              {th.mode === 'light' ? t('auth.light_theme_badge') : t('auth.dark_theme_badge')}
-                            </span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                            {th.mode === 'light' ? (
+                              <Sun size={17} color="var(--discord-yellow, #f59e0b)" />
+                            ) : (
+                              <Moon size={17} color="var(--discord-blurple, #6366f1)" />
+                            )}
                             {isSelected && <CheckCircle2 size={16} color="var(--theme-accent, var(--discord-blurple))" />}
                           </div>
                         </div>
