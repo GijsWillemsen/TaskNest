@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, Sparkles, Plus, RotateCw, Clock, Calendar } from 'lucide-react'
+import { X, Plus, RotateCw, Clock, Calendar } from 'lucide-react'
 import { createTask } from '../../services/taskService'
 import { useLanguage } from '../../context/useLanguage'
 
@@ -84,14 +84,8 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated, family
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div className="modal-title-wrapper">
-            <div className="modal-icon-badge">
-              <Sparkles size={20} />
-            </div>
             <h2>{t('tasks.create_title')}</h2>
           </div>
-          <button className="modal-close-btn" onClick={onClose} aria-label={t('common.close')}>
-            <X size={20} />
-          </button>
         </div>
 
         {errorMsg && <div className="auth-alert auth-alert-error">{errorMsg}</div>}
@@ -276,7 +270,7 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated, family
               {saving ? t('common.saving') : (
                 <>
                   <Plus size={18} />
-                  {t('tasks.submit_create')} ({pointsValue})
+                  {t('tasks.submit_create')}
                 </>
               )}
             </button>

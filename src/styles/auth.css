@@ -270,9 +270,10 @@
 
 .input-field:focus {
   outline: none;
-  border-color: var(--discord-blurple);
-  background-color: #0b0d14;
-  box-shadow: 0 0 0 3px var(--discord-blurple-glow);
+  border-color: var(--theme-accent, var(--discord-blurple));
+  background-color: var(--bg-surface-elevated, var(--bg-deep));
+  color: var(--text-pure);
+  box-shadow: 0 0 0 3px var(--theme-accent-glow, var(--discord-blurple-glow));
 }
 
 .input-field::placeholder {
@@ -721,21 +722,26 @@
   box-shadow: 0 1px 0 #4c1d95;
 }
 
+[data-theme='candy'] .input-field,
 [data-theme='playful'] .input-field {
-  background: #ffffff;
-  color: #1e1b4b;
-  border: 2px solid #7c3aed;
-  border-radius: 14px;
+  background-color: #f0f9ff !important;
+  color: #1e1b4b !important;
+  border: 2px solid #7c3aed !important;
+  border-radius: 14px !important;
 }
 
+[data-theme='candy'] .input-field:focus,
 [data-theme='playful'] .input-field:focus {
-  border-color: #581c87;
-  box-shadow: 0 3px 0 #581c87;
+  background-color: #ffffff !important;
+  color: #1e1b4b !important;
+  border-color: #581c87 !important;
+  box-shadow: 0 3px 0 #581c87 !important;
 }
 
+[data-theme='candy'] .input-field::placeholder,
 [data-theme='playful'] .input-field::placeholder {
-  color: #8b5cf6;
-  opacity: 0.65;
+  color: #8b5cf6 !important;
+  opacity: 0.65 !important;
 }
 
 [data-theme='playful'] .points-pill {
