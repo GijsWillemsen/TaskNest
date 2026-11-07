@@ -755,6 +755,36 @@
   resize: vertical;
 }
 
+/* Prevent black background on focus in light/playful themes */
+[data-theme='candy'] .modal-input,
+[data-theme='candy'] .modal-textarea,
+[data-theme='playful'] .modal-input,
+[data-theme='playful'] .modal-textarea {
+  background-color: #f0f9ff !important;
+  color: #1e1b4b !important;
+  border: 2px solid #7c3aed !important;
+  border-radius: 12px !important;
+}
+
+[data-theme='candy'] .modal-input:focus,
+[data-theme='candy'] .modal-textarea:focus,
+[data-theme='playful'] .modal-input:focus,
+[data-theme='playful'] .modal-textarea:focus {
+  background-color: #ffffff !important;
+  color: #1e1b4b !important;
+  border-color: #581c87 !important;
+  box-shadow: 0 3px 0 #581c87 !important;
+  outline: none !important;
+}
+
+[data-theme='candy'] .modal-input::placeholder,
+[data-theme='candy'] .modal-textarea::placeholder,
+[data-theme='playful'] .modal-input::placeholder,
+[data-theme='playful'] .modal-textarea::placeholder {
+  color: #8b5cf6 !important;
+  opacity: 0.65 !important;
+}
+
 .points-input-group {
   display: flex;
   align-items: center;
