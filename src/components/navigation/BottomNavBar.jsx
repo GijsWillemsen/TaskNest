@@ -24,9 +24,12 @@ export default function BottomNavBar() {
             {({ isActive }) => (
               <>
                 <div className="nav-item-icon">
-                  <Icon size={22} />
+                  <Icon
+                    size={isActive ? 27 : 21}
+                    strokeWidth={isActive ? 2.8 : 1.9}
+                  />
                 </div>
-                <span>{item.label}</span>
+                {!isActive && <span className="nav-item-label">{item.label}</span>}
                 {isActive && <div className="nav-item-active-bar" />}
               </>
             )}
