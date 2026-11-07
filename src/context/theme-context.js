@@ -4,7 +4,7 @@ export const THEMES = [
   // 4 LIGHT THEMES
   {
     id: 'candy',
-    name: 'Candy Pop 🍬',
+    name: 'Candy Pop',
     mode: 'light',
     description: 'Luchtig hemelsblauw, 3D paarse randen & vrolijke gele sterren',
     descriptionEn: 'Bubbly sky-blue, 3D candy purple borders & yellow stars',
@@ -15,7 +15,7 @@ export const THEMES = [
   },
   {
     id: 'blossom',
-    name: 'Pastel Blossom 🌸',
+    name: 'Pastel Blossom',
     mode: 'light',
     description: 'Zachte lavendel & rozenbloesem met speelse framboosroze accenten',
     descriptionEn: 'Soft lavender & rose blossom with playful raspberry accents',
@@ -26,7 +26,7 @@ export const THEMES = [
   },
   {
     id: 'citrus',
-    name: 'Sunny Citrus 🍋',
+    name: 'Sunny Citrus',
     mode: 'light',
     description: 'Zonnig warm vanillegeel met amber goud & vrolijke oranje knoppen',
     descriptionEn: 'Sunny vanilla cream with warm amber gold & bright citrus buttons',
@@ -37,7 +37,7 @@ export const THEMES = [
   },
   {
     id: 'breeze',
-    name: 'Nordic Breeze ☁️',
+    name: 'Nordic Breeze',
     mode: 'light',
     description: 'Fris Scandinavisch minimalistisch wit & ijsblauw met koningsblauw',
     descriptionEn: 'Fresh Nordic clean white & ice blue with crisp royal blue',
@@ -50,7 +50,7 @@ export const THEMES = [
   // 4 OVERHAULED DARK THEMES
   {
     id: 'obsidian',
-    name: 'Obsidian Luxe 🖤',
+    name: 'Obsidian Luxe',
     mode: 'dark',
     description: 'Mat diepzwart, titanium zilveren randen & strak diamantwit',
     descriptionEn: 'Matte obsidian black, titanium silver edges & pure diamond white',
@@ -61,7 +61,7 @@ export const THEMES = [
   },
   {
     id: 'arcade',
-    name: 'Cyber Neon 👾',
+    name: 'Cyber Neon',
     mode: 'dark',
     description: 'Diepe middernacht, neon cyaan gloed & felgroene gamer accents',
     descriptionEn: 'Deep midnight void, glowing neon cyan & electric gamer mint',
@@ -72,7 +72,7 @@ export const THEMES = [
   },
   {
     id: 'sunset',
-    name: 'Cosmic Sunset 🌌',
+    name: 'Cosmic Sunset',
     mode: 'dark',
     description: 'Kosmisch dieppaars, pruimkleurige kaarten & gloeiend koraalroze',
     descriptionEn: 'Cosmic deep violet, dark plum cards & glowing coral rose',
@@ -83,7 +83,7 @@ export const THEMES = [
   },
   {
     id: 'forest',
-    name: 'Emerald Forest 🌲',
+    name: 'Emerald Forest',
     mode: 'dark',
     description: 'Diep dennenbos, mosgroene oppervlakken & warm goud',
     descriptionEn: 'Deep pine night, rich moss surfaces & warm Nordic gold',

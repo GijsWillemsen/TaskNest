@@ -118,7 +118,7 @@ export default function TaskCard({
       onTaskUpdated(updated)
       celebrateTaskComplete()
       setIsCelebrated(true)
-      setFloatingBadge({ text: isDutch ? 'Voltooid! ⏳' : 'Done! ⏳', type: 'points-earned' })
+      setFloatingBadge({ text: isDutch ? 'Voltooid!' : 'Done!', type: 'points-earned' })
       setTimeout(() => {
         setIsCelebrated(false)
         setFloatingBadge(null)
@@ -151,7 +151,7 @@ export default function TaskCard({
       onTaskUpdated(res)
       celebrateTaskApproved()
       setIsCelebrated(true)
-      setFloatingBadge({ text: `+${task.points_value} ${t('common.points')}! 🎉`, type: 'points-earned' })
+      setFloatingBadge({ text: `+${task.points_value} ${t('common.points')}!`, type: 'points-earned' })
       setTimeout(() => {
         setIsCelebrated(false)
         setFloatingBadge(null)

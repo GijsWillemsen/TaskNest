@@ -13,20 +13,20 @@ export default function CreateRewardModal({ isOpen, onClose, onRewardCreated, fa
 
   const presets = isDutch
     ? [
-        { title: '1 Uur Gamen 🎮', description: '60 minuten extra gametijd op computer of console', cost: 25 },
-        { title: 'Favoriet Avondeten Kiezen 🍕', description: 'Jij kiest wat we vanavond eten (bijv. pizza of pannenkoeken)', cost: 40 },
-        { title: 'IJsje Halen 🍦', description: 'Samen naar de ijssalon voor jouw favoriete ijsje', cost: 30 },
-        { title: '30 Min Later naar Bed 🌙', description: 'Bedtijd een half uurtje opschuiven in het weekend', cost: 20 },
-        { title: 'Film Kiezen voor het Gezin 🎬', description: 'Jij kiest de film voor de filmavond', cost: 35 },
-        { title: 'Nieuw Boek of Speelgoed 🎁', description: 'Een leuk cadeautje of boek uitzoeken in de winkel', cost: 100 },
+        { title: '1 Uur Gamen', description: '60 minuten extra gametijd op computer of console', cost: 25 },
+        { title: 'Favoriet Avondeten Kiezen', description: 'Jij kiest wat we vanavond eten (bijv. pizza of pannenkoeken)', cost: 40 },
+        { title: 'IJsje Halen', description: 'Samen naar de ijssalon voor jouw favoriete ijsje', cost: 30 },
+        { title: '30 Min Later naar Bed', description: 'Bedtijd een half uurtje opschuiven in het weekend', cost: 20 },
+        { title: 'Film Kiezen voor het Gezin', description: 'Jij kiest de film voor de filmavond', cost: 35 },
+        { title: 'Nieuw Boek of Speelgoed', description: 'Een leuk cadeautje of boek uitzoeken in de winkel', cost: 100 },
       ]
     : [
-        { title: '1 Hour Video Games 🎮', description: 'Extra 60 minutes of gaming time', cost: 25 },
-        { title: 'Pick Tonight’s Dinner 🍕', description: 'Choose favorite meal or pizza night', cost: 40 },
-        { title: 'Ice Cream Trip 🍦', description: 'Trip to get your favorite ice cream treat', cost: 30 },
-        { title: 'Stay Up 30 Mins Late 🌙', description: 'Push bedtime back by half an hour', cost: 20 },
-        { title: 'Family Movie Pick 🎬', description: 'You pick what movie the family watches', cost: 35 },
-        { title: 'New Book or Toy 🎁', description: 'Reward trip to choose a new book or toy', cost: 100 },
+        { title: '1 Hour Video Games', description: 'Extra 60 minutes of gaming time', cost: 25 },
+        { title: 'Pick Tonight’s Dinner', description: 'Choose favorite meal or pizza night', cost: 40 },
+        { title: 'Ice Cream Trip', description: 'Trip to get your favorite ice cream treat', cost: 30 },
+        { title: 'Stay Up 30 Mins Late', description: 'Push bedtime back by half an hour', cost: 20 },
+        { title: 'Family Movie Pick', description: 'You pick what movie the family watches', cost: 35 },
+        { title: 'New Book or Toy', description: 'Reward trip to choose a new book or toy', cost: 100 },
       ]
 
   if (!isOpen) return null
