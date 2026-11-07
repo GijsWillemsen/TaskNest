@@ -66,7 +66,7 @@ CREATE TABLE public.reward_requests (
   family_id UUID NOT NULL REFERENCES public.families(id) ON DELETE CASCADE,
   reward_id UUID NOT NULL REFERENCES public.rewards(id) ON DELETE CASCADE,
   kid_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+  status TEXT NOT NULL DEFAULT 'available' CHECK (status IN ('available', 'pending', 'approved', 'rejected', 'used')),
   created_at TIMESTAMPTZ DEFAULT now()
 );
 

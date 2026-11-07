@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/useAuth'
 import { useTheme } from '../../context/useTheme'
+import { useLanguage } from '../../context/useLanguage'
 import { THEMES } from '../../context/theme-context'
 import { createFamily, joinFamilyByCode } from '../../services/familyService'
 import Toast from '../common/Toast'
@@ -43,6 +44,7 @@ export default function SignUp() {
 
   const { signUp, refreshProfile } = useAuth()
   const { setTheme } = useTheme()
+  const { t, isDutch } = useLanguage()
   const navigate = useNavigate()
 
   const showError = (msg) => setToast({ message: msg, type: 'error' })
@@ -59,13 +61,16 @@ export default function SignUp() {
     setToast({ message: '', type: 'error' })
 
     if (!displayName.trim()) {
-      showError('Please enter your name.')
+      showError(t('auth.err_enter_name'))
       return
     }
 
     // Auto-suggest family name for parents
     if (role === 'parent' && !familyName) {
-      setFamilyName(`${displayName.trim()}'s Family`)
+      const defaultFamily = isDutch
+        ? `Familie ${displayName.trim()}`
+        : `${displayName.trim()}'s Family`
+      setFamilyName(defaultFamily)
     }
 
     setStep(2)
@@ -87,33 +92,33 @@ export default function SignUp() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
     if (!cleanEmail || !password) {
-      showError('Please enter both email and password.')
+      showError(t('auth.err_enter_credentials'))
       return
     }
 
     if (!emailRegex.test(cleanEmail)) {
-      showError('Please enter a valid email address.')
+      showError(t('auth.err_invalid_email'))
       return
     }
 
     if (password.length < 6) {
-      showError('Password must be at least 6 characters.')
+      showError(t('auth.err_password_len'))
       return
     }
 
     if (role === 'parent' && !familyName.trim()) {
-      showError('Please enter a family name.')
+      showError(t('auth.err_enter_family_name'))
       return
     }
 
     if (role === 'kid') {
       const code = inviteCode.trim().toUpperCase()
       if (!code) {
-        showError('Please enter your 6-digit family invite code.')
+        showError(t('auth.err_enter_code'))
         return
       }
       if (code.length !== 6) {
-        showError('Invite codes must be exactly 6 characters.')
+        showError(t('auth.err_code_len'))
         return
       }
     }
@@ -133,7 +138,7 @@ export default function SignUp() {
 
       const userId = authData?.user?.id
       if (!userId) {
-        throw new Error('Account initialization failed. Please try again.')
+        throw new Error(isDutch ? 'Account initialisatie mislukt. Probeer het opnieuw.' : 'Account initialization failed. Please try again.')
       }
 
       // 2. Client-side fallback setup for family
@@ -144,14 +149,14 @@ export default function SignUp() {
             userId,
           })
           if (newFam) {
-            showSuccess(`Family "${newFam.name}" created! Invite code: ${newFam.invite_code}`)
+            showSuccess(t('auth.succ_family_created', { name: newFam.name, code: newFam.invite_code }))
           }
         } else {
           await joinFamilyByCode({
             inviteCode: inviteCode.trim().toUpperCase(),
             userId,
           })
-          showSuccess('Successfully joined your family!')
+          showSuccess(t('auth.succ_family_joined'))
         }
       } catch (famErr) {
         console.warn('Post-signup family fallback notice:', famErr.message)
@@ -161,7 +166,7 @@ export default function SignUp() {
 
       // Handle unconfirmed email scenario
       if (authData?.user && !authData?.session) {
-        showSuccess('Account created! Please check your email to verify before signing in.')
+        showSuccess(t('auth.succ_verify_email'))
       } else {
         navigate('/tasks')
       }
@@ -169,11 +174,11 @@ export default function SignUp() {
       console.error('Registration failed:', err)
       const raw = err.message || ''
       if (raw.toLowerCase().includes('already registered')) {
-        showError('This email is already in use. Please sign in instead.')
+        showError(t('auth.err_email_in_use'))
       } else if (raw.toLowerCase().includes('invite code') || raw.toLowerCase().includes('family not found')) {
-        showError('Invalid 6-digit family invite code. Please double-check with your parent.')
+        showError(t('auth.err_invalid_code'))
       } else {
-        showError(raw || 'Failed to complete registration.')
+        showError(raw || (isDutch ? 'Registratie mislukt.' : 'Failed to complete registration.'))
       }
     } finally {
       setSubmitting(false)
@@ -185,14 +190,14 @@ export default function SignUp() {
       <div className="auth-card" style={{ maxWidth: '480px' }}>
         <div className="auth-header">
           <h1 className="auth-title">
-            {step === 1 && 'Create Account'}
-            {step === 2 && 'Choose Theme'}
-            {step === 3 && 'Final Step'}
+            {step === 1 && t('auth.signup_title')}
+            {step === 2 && t('auth.choose_theme_title')}
+            {step === 3 && t('auth.final_step_title')}
           </h1>
           <p className="auth-subtitle">
-            {step === 1 && 'Step 1 of 3: Role & Name'}
-            {step === 2 && 'Step 2 of 3: Choose your visual style'}
-            {step === 3 && (role === 'parent' ? 'Step 3 of 3: Credentials & Family setup' : 'Step 3 of 3: Credentials & Join family')}
+            {step === 1 && `${t('auth.step_indicator', { step: 1 })}: ${t('auth.step1_title')}`}
+            {step === 2 && `${t('auth.step_indicator', { step: 2 })}: ${t('auth.choose_theme_sub')}`}
+            {step === 3 && (role === 'parent' ? `${t('auth.step_indicator', { step: 3 })}: ${t('auth.step3_parent_title')}` : `${t('auth.step_indicator', { step: 3 })}: ${t('auth.step3_kid_title')}`)}
           </p>
         </div>
 
@@ -224,7 +229,7 @@ export default function SignUp() {
         {step === 1 && (
           <form onSubmit={handleStep1Next} className="auth-form">
             <div className="form-group">
-              <label className="form-label">Are you a Parent or a Kid?</label>
+              <label className="form-label">{t('auth.step1_title')}</label>
               <div className="role-selector-grid">
                 <button
                   type="button"
@@ -244,9 +249,9 @@ export default function SignUp() {
                   }}
                 >
                   <div style={{ fontSize: '1.75rem' }}>👑</div>
-                  <strong style={{ color: 'var(--text-pure)', fontSize: '1.05rem' }}>Parent</strong>
+                  <strong style={{ color: 'var(--text-pure)', fontSize: '1.05rem' }}>{t('auth.parent_role')}</strong>
                   <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', textAlign: 'center' }}>
-                    Create chores, review proof, approve rewards
+                    {t('auth.parent_desc')}
                   </span>
                 </button>
 
@@ -268,9 +273,9 @@ export default function SignUp() {
                   }}
                 >
                   <div style={{ fontSize: '1.75rem' }}>🚀</div>
-                  <strong style={{ color: 'var(--text-pure)', fontSize: '1.05rem' }}>Kid</strong>
+                  <strong style={{ color: 'var(--text-pure)', fontSize: '1.05rem' }}>{t('auth.kid_role')}</strong>
                   <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', textAlign: 'center' }}>
-                    Claim chores, earn points, redeem cool rewards
+                    {t('auth.kid_desc')}
                   </span>
                 </button>
               </div>
@@ -278,7 +283,7 @@ export default function SignUp() {
 
             <div className="form-group" style={{ marginTop: '0.5rem' }}>
               <label htmlFor="displayName" className="form-label">
-                What is your name?
+                {t('auth.name_question')}
               </label>
               <div className="input-wrapper">
                 <User size={18} className="input-icon" />
@@ -286,7 +291,7 @@ export default function SignUp() {
                   id="displayName"
                   type="text"
                   className="input-field"
-                  placeholder={role === 'parent' ? 'e.g. Mom, Dad, Sarah' : 'e.g. Leo, Emma, Alex'}
+                  placeholder={t('auth.name_placeholder')}
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   required
@@ -295,7 +300,7 @@ export default function SignUp() {
             </div>
 
             <button type="submit" className="auth-submit-btn" style={{ marginTop: '1rem' }}>
-              <span>Continue to Theme</span>
+              <span>{t('auth.continue_theme')}</span>
               <ArrowRight size={18} />
             </button>
           </form>
@@ -305,22 +310,22 @@ export default function SignUp() {
         {step === 2 && (
           <form onSubmit={handleStep2Next} className="auth-form">
             <div className="form-group">
-              <label className="form-label">Choose your theme (from playful to mature)</label>
+              <label className="form-label">{t('auth.choose_theme_sub')}</label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', maxHeight: '360px', overflowY: 'auto', paddingRight: '4px' }}>
-                {THEMES.map((t) => {
-                  const isSelected = themeChoice === t.id
+                {THEMES.map((th) => {
+                  const isSelected = themeChoice === th.id
                   return (
                     <div
-                      key={t.id}
-                      onClick={() => setThemeChoice(t.id)}
+                      key={th.id}
+                      onClick={() => setThemeChoice(th.id)}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
                         gap: '0.85rem',
                         padding: '0.85rem 1rem',
                         borderRadius: '16px',
-                        border: isSelected ? `2.5px solid ${t.accentPreview}` : '1.5px solid var(--border-subtle)',
-                        boxShadow: isSelected ? `0 4px 14px ${t.accentPreview}33` : 'none',
+                        border: isSelected ? `2.5px solid ${th.accentPreview}` : '1.5px solid var(--border-subtle)',
+                        boxShadow: isSelected ? `0 4px 14px ${th.accentPreview}33` : 'none',
                         background: isSelected ? 'var(--bg-surface-elevated)' : 'var(--bg-surface)',
                         cursor: 'pointer',
                         transition: 'all 0.15s ease',
@@ -331,8 +336,8 @@ export default function SignUp() {
                           width: '38px',
                           height: '38px',
                           borderRadius: '12px',
-                          background: t.bgPreview,
-                          border: `2px solid ${t.accentPreview}`,
+                          background: th.bgPreview,
+                          border: `2px solid ${th.accentPreview}`,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -344,7 +349,7 @@ export default function SignUp() {
                             width: '14px',
                             height: '14px',
                             borderRadius: '50%',
-                            backgroundColor: t.accentPreview,
+                            backgroundColor: th.accentPreview,
                           }}
                         />
                       </div>
@@ -352,12 +357,12 @@ export default function SignUp() {
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.4rem' }}>
                           <strong style={{ color: 'var(--text-pure)', fontSize: '0.95rem' }}>
-                            {t.name}
+                            {th.name}
                           </strong>
                           {isSelected && <CheckCircle2 size={16} color="var(--theme-accent, var(--discord-blurple))" />}
                         </div>
                         <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.35 }}>
-                          {t.description}
+                          {th.description}
                         </p>
                       </div>
                     </div>
@@ -373,10 +378,10 @@ export default function SignUp() {
                 onClick={() => setStep(1)}
                 style={{ flex: '0 0 auto', padding: '0.8rem 1rem', borderRadius: '12px' }}
               >
-                <ArrowLeft size={16} /> Back
+                <ArrowLeft size={16} /> {t('auth.back')}
               </button>
               <button type="submit" className="auth-submit-btn" style={{ flex: 1, margin: 0 }}>
-                <span>Continue to Account</span>
+                <span>{t('auth.continue_account')}</span>
                 <ArrowRight size={18} />
               </button>
             </div>
@@ -388,7 +393,7 @@ export default function SignUp() {
           <form onSubmit={handleFinalSubmit} className="auth-form">
             <div className="form-group">
               <label htmlFor="email" className="form-label">
-                Email Address
+                {t('auth.email_label')}
               </label>
               <div className="input-wrapper">
                 <Mail size={18} className="input-icon" />
@@ -396,7 +401,7 @@ export default function SignUp() {
                   id="email"
                   type="email"
                   className="input-field"
-                  placeholder="name@family.com"
+                  placeholder="naam@gezin.nl"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   autoComplete="email"
@@ -407,7 +412,7 @@ export default function SignUp() {
 
             <div className="form-group">
               <label htmlFor="password" className="form-label">
-                Password
+                {t('auth.password_label')}
               </label>
               <div className="input-wrapper">
                 <Lock size={18} className="input-icon" />
@@ -415,7 +420,7 @@ export default function SignUp() {
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   className="input-field"
-                  placeholder="At least 6 characters"
+                  placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete="new-password"
@@ -437,7 +442,7 @@ export default function SignUp() {
             {role === 'parent' ? (
               <div className="form-group">
                 <label htmlFor="familyName" className="form-label">
-                  Family Name
+                  {t('auth.family_name_label')}
                 </label>
                 <div className="input-wrapper">
                   <Users size={18} className="input-icon" />
@@ -445,20 +450,20 @@ export default function SignUp() {
                     id="familyName"
                     type="text"
                     className="input-field"
-                    placeholder="e.g. The Millers"
+                    placeholder={t('auth.family_name_placeholder')}
                     value={familyName}
                     onChange={(e) => setFamilyName(e.target.value)}
                     required
                   />
                 </div>
                 <span className="form-helper-text">
-                  Your family group and 6-digit invite code will be created automatically.
+                  {t('auth.parent_helper')}
                 </span>
               </div>
             ) : (
               <div className="form-group">
                 <label htmlFor="inviteCode" className="form-label">
-                  6-Digit Family Invite Code
+                  {t('auth.invite_code_label')}
                 </label>
                 <div className="input-wrapper">
                   <KeyRound size={18} className="input-icon" />
@@ -467,7 +472,7 @@ export default function SignUp() {
                     type="text"
                     maxLength={6}
                     className="input-field"
-                    placeholder="e.g. 7X9K2P"
+                    placeholder={t('auth.invite_code_placeholder')}
                     value={inviteCode}
                     onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
                     style={{ textTransform: 'uppercase', letterSpacing: '0.15em', fontWeight: 700 }}
@@ -475,7 +480,7 @@ export default function SignUp() {
                   />
                 </div>
                 <span className="form-helper-text">
-                  Ask your parent for the 6-digit code shown in their Settings page.
+                  {t('auth.kid_helper')}
                 </span>
               </div>
             )}
@@ -488,7 +493,7 @@ export default function SignUp() {
                 disabled={submitting}
                 style={{ flex: '0 0 auto', padding: '0.8rem 1rem', borderRadius: '12px' }}
               >
-                <ArrowLeft size={16} /> Back
+                <ArrowLeft size={16} /> {t('auth.back')}
               </button>
               <button
                 type="submit"
@@ -499,12 +504,12 @@ export default function SignUp() {
                 {submitting ? (
                   <>
                     <span className="btn-spinner" />
-                    <span>Setting up...</span>
+                    <span>{t('auth.setting_up')}</span>
                   </>
                 ) : (
                   <>
                     <Sparkles size={18} />
-                    <span>Create Account</span>
+                    <span>{t('auth.create_account_btn')}</span>
                   </>
                 )}
               </button>
@@ -513,8 +518,7 @@ export default function SignUp() {
         )}
 
         <div className="auth-footer">
-          Already have an account?
-          <Link to="/login">Log in</Link>
+          <Link to="/login">{t('auth.have_account')}</Link>
         </div>
       </div>
     </div>

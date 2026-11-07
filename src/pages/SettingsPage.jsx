@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/useAuth'
 import { useTheme } from '../context/useTheme'
+import { useLanguage } from '../context/useLanguage'
 import { THEMES } from '../context/theme-context'
 import { getFamilyMembers } from '../services/familyService'
 import {
@@ -15,12 +16,14 @@ import {
   Palette,
   CheckCircle2,
   Edit2,
+  Globe,
 } from 'lucide-react'
 import '../styles/auth.css'
 
 export default function SettingsPage() {
   const { user, family, familyId, role, points, displayName, signOut, updateDisplayName } = useAuth()
   const { theme, setTheme } = useTheme()
+  const { t, lang, setLanguage, isDutch } = useLanguage()
   const [copied, setCopied] = useState(false)
   const [members, setMembers] = useState([])
   const [loadingMembers, setLoadingMembers] = useState(false)
@@ -89,10 +92,10 @@ export default function SettingsPage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
         <div>
           <h1 style={{ margin: '0 0 0.25rem 0', fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-pure)' }}>
-            Settings & Preferences
+            {t('settings.title')}
           </h1>
           <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-            Personalize your name, visual theme, and invite family
+            {isDutch ? 'Pas je naam, taal en app thema aan en nodig gezinsleden uit' : 'Personalize your name, language, theme, and invite family'}
           </p>
         </div>
 
@@ -100,11 +103,72 @@ export default function SettingsPage() {
           onClick={signOut}
           className="signout-btn"
           style={{ padding: '0.55rem 1rem' }}
-          title="Sign out"
+          title={t('settings.sign_out')}
         >
           <LogOut size={16} />
-          <span>Sign Out</span>
+          <span>{t('settings.sign_out')}</span>
         </button>
+      </div>
+
+      {/* Language Card (Dutch Default + English Optional) */}
+      <div className="placeholder-card settings-card" style={{ padding: '1.35rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.2rem' }}>
+          <div className="placeholder-icon" style={{ background: 'rgba(52, 211, 153, 0.15)', color: 'var(--discord-green)' }}>
+            <Globe size={22} />
+          </div>
+          <div>
+            <h2 style={{ fontSize: '1.1rem', margin: 0 }}>{t('settings.language_heading')}</h2>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+              {isDutch ? 'Kies jouw voorkeurstaal voor de applicatie' : 'Choose your preferred interface language'}
+            </span>
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
+          <button
+            type="button"
+            onClick={() => setLanguage('nl')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0.85rem 1rem',
+              borderRadius: '14px',
+              border: lang === 'nl' ? '2.5px solid var(--theme-accent, var(--discord-blurple))' : '1.5px solid var(--border-subtle)',
+              background: lang === 'nl' ? 'var(--bg-surface-elevated)' : 'var(--bg-surface)',
+              color: 'var(--text-pure)',
+              fontWeight: 700,
+              fontSize: '0.92rem',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <span>{t('settings.lang_dutch')}</span>
+            {lang === 'nl' && <CheckCircle2 size={18} color="var(--theme-accent, var(--discord-blurple))" />}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setLanguage('en')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0.85rem 1rem',
+              borderRadius: '14px',
+              border: lang === 'en' ? '2.5px solid var(--theme-accent, var(--discord-blurple))' : '1.5px solid var(--border-subtle)',
+              background: lang === 'en' ? 'var(--bg-surface-elevated)' : 'var(--bg-surface)',
+              color: 'var(--text-pure)',
+              fontWeight: 700,
+              fontSize: '0.92rem',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <span>{t('settings.lang_english')}</span>
+            {lang === 'en' && <CheckCircle2 size={18} color="var(--theme-accent, var(--discord-blurple))" />}
+          </button>
+        </div>
       </div>
 
       {/* User Profile Card */}
@@ -114,9 +178,9 @@ export default function SettingsPage() {
             <User size={22} />
           </div>
           <div>
-            <h2 style={{ fontSize: '1.1rem', margin: 0 }}>User Profile</h2>
+            <h2 style={{ fontSize: '1.1rem', margin: 0 }}>{t('settings.profile_heading')}</h2>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              Your account details and point balance
+              {isDutch ? 'Jouw accountgegevens en actuele punten' : 'Your account details and point balance'}
             </span>
           </div>
         </div>
@@ -125,7 +189,7 @@ export default function SettingsPage() {
           {/* Editable Display Name */}
           <div>
             <span style={{ display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-dim)', fontWeight: 700, marginBottom: '0.35rem' }}>
-              Your Name
+              {t('settings.display_name_label')}
             </span>
             {isEditingName ? (
               <form onSubmit={handleSaveName} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
@@ -148,7 +212,7 @@ export default function SettingsPage() {
                     color: '#090a0f',
                     cursor: 'pointer',
                   }}
-                  title="Save name"
+                  title={t('common.save')}
                 >
                   <Check size={16} />
                 </button>
@@ -171,7 +235,7 @@ export default function SettingsPage() {
                     cursor: 'pointer',
                     padding: '2px',
                   }}
-                  title="Edit your name"
+                  title={t('settings.display_name_label')}
                 >
                   <Edit2 size={14} />
                 </button>
@@ -181,17 +245,17 @@ export default function SettingsPage() {
 
           <div>
             <span style={{ display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-dim)', fontWeight: 700, marginBottom: '0.35rem' }}>
-              Role
+              {isDutch ? 'Rol' : 'Role'}
             </span>
             <span className={`role-badge ${role || 'kid'}`}>
               <Shield size={13} />
-              {isParent ? 'Parent' : 'Kid'}
+              {isParent ? t('common.parent') : t('common.kid')}
             </span>
           </div>
 
           <div>
             <span style={{ display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-dim)', fontWeight: 700, marginBottom: '0.35rem' }}>
-              Email Address
+              {t('auth.email_label')}
             </span>
             <span style={{ fontSize: '0.92rem', color: 'var(--text-pure)', fontWeight: 500 }}>
               {user?.email || 'N/A'}
@@ -200,7 +264,7 @@ export default function SettingsPage() {
 
           <div>
             <span style={{ display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-dim)', fontWeight: 700, marginBottom: '0.35rem' }}>
-              Live Points
+              {isDutch ? 'Huidige Punten' : 'Points Balance'}
             </span>
             <div className="points-pill" style={{ display: 'inline-flex', padding: '0.35rem 0.8rem', fontSize: '0.92rem', gap: '0.35rem' }}>
               <Coins size={16} />
@@ -217,29 +281,29 @@ export default function SettingsPage() {
             <Palette size={22} />
           </div>
           <div>
-            <h2 style={{ fontSize: '1.1rem', margin: 0 }}>Visual Themes (5 Choices)</h2>
+            <h2 style={{ fontSize: '1.1rem', margin: 0 }}>{t('settings.theme_heading')}</h2>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              Choose your vibe from childish and playful to sleek and mature
+              {isDutch ? 'Kies jouw stijl: van speels en vrolijk tot strak en minimalistisch' : 'Choose your vibe from playful to sleek and mature'}
             </span>
           </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
-          {THEMES.map((t) => {
-            const isSelected = theme === t.id || (theme === 'playful' && t.id === 'candy') || (theme === 'modern' && t.id === 'obsidian')
+          {THEMES.map((themeOption) => {
+            const isSelected = theme === themeOption.id || (theme === 'playful' && themeOption.id === 'candy') || (theme === 'modern' && themeOption.id === 'obsidian')
             return (
               <button
-                key={t.id}
+                key={themeOption.id}
                 type="button"
-                onClick={() => setTheme(t.id)}
+                onClick={() => setTheme(themeOption.id)}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.75rem',
                   padding: '0.85rem',
                   borderRadius: '16px',
-                  border: isSelected ? `2.5px solid ${t.accentPreview}` : '1.5px solid var(--border-subtle)',
-                  boxShadow: isSelected ? `0 4px 14px ${t.accentPreview}33` : 'none',
+                  border: isSelected ? `2.5px solid ${themeOption.accentPreview}` : '1.5px solid var(--border-subtle)',
+                  boxShadow: isSelected ? `0 4px 14px ${themeOption.accentPreview}33` : 'none',
                   background: isSelected ? 'var(--bg-surface-elevated)' : 'var(--bg-surface)',
                   cursor: 'pointer',
                   textAlign: 'left',
@@ -252,8 +316,8 @@ export default function SettingsPage() {
                     width: '38px',
                     height: '38px',
                     borderRadius: '10px',
-                    background: t.bgPreview,
-                    border: `2px solid ${t.accentPreview}`,
+                    background: themeOption.bgPreview,
+                    border: `2px solid ${themeOption.accentPreview}`,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -265,19 +329,19 @@ export default function SettingsPage() {
                       width: '12px',
                       height: '12px',
                       borderRadius: '50%',
-                      backgroundColor: t.accentPreview,
+                      backgroundColor: themeOption.accentPreview,
                     }}
                   />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.3rem' }}>
                     <strong style={{ color: 'var(--text-pure)', fontSize: '0.92rem' }}>
-                      {t.name}
+                      {themeOption.name}
                     </strong>
                     {isSelected && <CheckCircle2 size={16} color="var(--theme-accent, var(--discord-blurple))" />}
                   </div>
                   <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>
-                    {t.description}
+                    {themeOption.description}
                   </p>
                 </div>
               </button>
@@ -294,10 +358,10 @@ export default function SettingsPage() {
           </div>
           <div>
             <h2 style={{ fontSize: '1.1rem', margin: 0 }}>
-              {family?.name || 'Family Nest'}
+              {family?.name || t('nav.family_nest')}
             </h2>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              Invite family members to join and collaborate
+              {t('settings.invite_code_desc')}
             </span>
           </div>
         </div>
@@ -318,7 +382,7 @@ export default function SettingsPage() {
           >
             <div>
               <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.76rem', textTransform: 'uppercase', color: 'var(--theme-accent, var(--discord-blurple))', fontWeight: 700, letterSpacing: '0.04em', marginBottom: '0.25rem' }}>
-                <KeyRound size={14} /> 6-Digit Family Invite Code
+                <KeyRound size={14} /> {t('settings.invite_code_label')}
               </span>
               <div
                 style={{
@@ -332,7 +396,7 @@ export default function SettingsPage() {
                 {family.invite_code}
               </div>
               <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                Share this code with kids or parents to link them directly to this Nest.
+                {t('settings.invite_code_desc')}
               </p>
             </div>
 
@@ -351,18 +415,18 @@ export default function SettingsPage() {
             >
               {copied ? (
                 <>
-                  <Check size={16} /> Copied!
+                  <Check size={16} /> {t('settings.code_copied')}
                 </>
               ) : (
                 <>
-                  <Copy size={16} /> Copy Code
+                  <Copy size={16} /> {t('settings.copy_code')}
                 </>
               )}
             </button>
           </div>
         ) : (
           <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginBottom: '1rem' }}>
-            No family linked yet. Use the prompt on the dashboard to create or join a family.
+            {isDutch ? 'Nog geen gezin gekoppeld.' : 'No family linked yet.'}
           </p>
         )}
 
@@ -370,13 +434,13 @@ export default function SettingsPage() {
         {familyId && (
           <div>
             <h3 style={{ margin: '0 0 0.75rem 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-pure)' }}>
-              Connected Family Members ({members.length})
+              {t('settings.members_heading')} ({members.length})
             </h3>
 
             {loadingMembers ? (
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Loading members...</p>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{t('common.loading')}</p>
             ) : members.length === 0 ? (
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)' }}>No members found.</p>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)' }}>{t('settings.no_members')}</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
                 {members.map((m) => (
@@ -394,13 +458,13 @@ export default function SettingsPage() {
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                       <span className={`role-badge ${m.role}`}>
-                        {m.role === 'parent' ? 'Parent' : 'Kid'}
+                        {m.role === 'parent' ? t('common.parent') : t('common.kid')}
                       </span>
                       <span style={{ fontSize: '0.95rem', color: 'var(--text-pure)', fontWeight: 700 }}>
-                        {m.display_name || (m.role === 'parent' ? 'Parent' : 'Kid')}
+                        {m.display_name || (m.role === 'parent' ? t('common.parent') : t('common.kid'))}
                         {m.id === user?.id && (
                           <span style={{ fontSize: '0.75rem', color: 'var(--theme-accent, var(--discord-blurple))', marginLeft: '0.4rem' }}>
-                            (You)
+                            ({isDutch ? 'Jij' : 'You'})
                           </span>
                         )}
                       </span>
@@ -421,7 +485,7 @@ export default function SettingsPage() {
       {/* Clean Footer */}
       <div style={{ textAlign: 'center', padding: '0.75rem 0', color: 'var(--text-dim)', fontSize: '0.8rem' }}>
         <p style={{ margin: 0 }}>
-          Family Chore & Reward Hub
+          {isDutch ? 'Gezinstaken & Beloningen Hub' : 'Family Chore & Reward Hub'}
         </p>
       </div>
     </div>

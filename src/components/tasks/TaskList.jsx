@@ -13,12 +13,14 @@ import TaskCard from './TaskCard'
 import CreateTaskModal from './CreateTaskModal'
 import { getTasks } from '../../services/taskService'
 import { supabase } from '../../supabaseClient'
+import { useLanguage } from '../../context/useLanguage'
 import '../../styles/tasks.css'
 
 export default function TaskList({ role, currentUserId, familyId, onPointsRefresh }) {
+  const { t } = useLanguage()
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState('all') // 'all', 'open', 'my_tasks', 'needs_approval', 'completed'
+  const [filter, setFilter] = useState('open') // Standard default tab is now 'open'
   const [searchQuery, setSearchQuery] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
@@ -160,15 +162,15 @@ export default function TaskList({ role, currentUserId, familyId, onPointsRefres
       {/* Top Toolbar */}
       <div className="section-toolbar">
         <div className="toolbar-left">
-          <h2>Family Chores</h2>
-          <span className="count-badge">{tasks.length} total</span>
+          <h2>{t('tasks.title')}</h2>
+          <span className="count-badge">{t('tasks.items_count', { count: tasks.length })}</span>
         </div>
 
         <div className="toolbar-actions">
           <button
             onClick={handleManualRefresh}
             className="icon-btn"
-            title="Refresh chores"
+            title={t('common.refresh')}
             disabled={loading}
           >
             <RefreshCw size={17} className={loading ? 'spinning' : ''} />
@@ -178,85 +180,24 @@ export default function TaskList({ role, currentUserId, familyId, onPointsRefres
             <button
               onClick={() => setIsModalOpen(true)}
               className="btn-create-chore"
-              title="Create a new task"
+              title={t('tasks.add_chore')}
             >
               <Plus size={18} />
-              <span>Create Chore</span>
+              <span>{t('tasks.add_chore')}</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* Highlight Section: Needs Approval (Parents) */}
-      {isParent && pendingApprovalCount > 0 && filter === 'all' && (
-        <div style={{ marginBottom: '0.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-            <span style={{ color: 'var(--discord-yellow)', fontWeight: 700, fontSize: '0.95rem' }}>
-              ⚡ Needs Parent Approval ({pendingApprovalCount})
-            </span>
-          </div>
-          <div className="tasks-grid">
-            {tasks
-              .filter((t) => t.status === 'pending_approval')
-              .map((task) => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  isParent={isParent}
-                  currentUserId={currentUserId}
-                  onTaskUpdated={handleTaskUpdated}
-                  onTaskDeleted={handleTaskDeleted}
-                  onError={setErrorMessage}
-                  onSuccess={setSuccessMessage}
-                />
-              ))}
-          </div>
-        </div>
-      )}
-
-      {/* Highlight Section: My Active Chores */}
-      {myActiveCount > 0 && filter === 'all' && (
-        <div style={{ marginBottom: '0.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-            <span style={{ color: 'var(--discord-orange)', fontWeight: 700, fontSize: '0.95rem' }}>
-              🚀 My Active Chores ({myActiveCount})
-            </span>
-          </div>
-          <div className="tasks-grid">
-            {tasks
-              .filter((t) => t.claimed_by === currentUserId && t.status === 'claimed')
-              .map((task) => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  isParent={isParent}
-                  currentUserId={currentUserId}
-                  onTaskUpdated={handleTaskUpdated}
-                  onTaskDeleted={handleTaskDeleted}
-                  onError={setErrorMessage}
-                  onSuccess={setSuccessMessage}
-                />
-              ))}
-          </div>
-        </div>
-      )}
-
       {/* Filter Tabs & Search Bar */}
       <div className="filter-tabs-row">
         <div className="filter-tabs">
-          <button
-            className={`filter-tab ${filter === 'all' ? 'active' : ''}`}
-            onClick={() => setFilter('all')}
-          >
-            All
-          </button>
-
           <button
             className={`filter-tab ${filter === 'open' ? 'active' : ''}`}
             onClick={() => setFilter('open')}
           >
             <Sparkles size={13} />
-            Open ({openCount})
+            {t('tasks.tab_open')} ({openCount})
           </button>
 
           <button
@@ -264,24 +205,33 @@ export default function TaskList({ role, currentUserId, familyId, onPointsRefres
             onClick={() => setFilter('my_tasks')}
           >
             <Clock size={13} />
-            My Chores ({myActiveCount})
+            {t('tasks.tab_my_tasks')} ({myActiveCount})
           </button>
 
-          <button
-            className={`filter-tab ${filter === 'needs_approval' ? 'active' : ''}`}
-            onClick={() => setFilter('needs_approval')}
-          >
-            Needs Approval
-            {pendingApprovalCount > 0 && (
-              <span className="tab-bubble">{pendingApprovalCount}</span>
-            )}
-          </button>
+          {isParent && (
+            <button
+              className={`filter-tab ${filter === 'needs_approval' ? 'active' : ''}`}
+              onClick={() => setFilter('needs_approval')}
+            >
+              {t('tasks.tab_needs_approval')}
+              {pendingApprovalCount > 0 && (
+                <span className="tab-bubble">{pendingApprovalCount}</span>
+              )}
+            </button>
+          )}
 
           <button
             className={`filter-tab ${filter === 'completed' ? 'active' : ''}`}
             onClick={() => setFilter('completed')}
           >
-            Completed
+            {t('tasks.tab_completed')}
+          </button>
+
+          <button
+            className={`filter-tab ${filter === 'all' ? 'active' : ''}`}
+            onClick={() => setFilter('all')}
+          >
+            {t('tasks.tab_all')}
           </button>
         </div>
 
@@ -291,7 +241,7 @@ export default function TaskList({ role, currentUserId, familyId, onPointsRefres
           <input
             type="text"
             className="search-input"
-            placeholder="Search chores..."
+            placeholder={t('tasks.search_placeholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -302,29 +252,31 @@ export default function TaskList({ role, currentUserId, familyId, onPointsRefres
       {loading ? (
         <div className="section-loading">
           <div className="spinner"></div>
-          <p>Loading chores...</p>
+          <p>{t('common.loading')}</p>
         </div>
       ) : filteredTasks.length === 0 ? (
         <div className="empty-state-box">
           <div className="empty-icon-wrap">
             <CheckSquare size={30} />
           </div>
-          <h3>No chores in this view</h3>
+          <h3>{t('tasks.empty_title')}</h3>
           <p>
             {filter === 'needs_approval'
-              ? 'No chores are waiting for parent review right now.'
+              ? t('tasks.empty_desc_approval')
               : filter === 'open'
-              ? 'All chores are currently claimed or completed!'
+              ? t('tasks.empty_desc_open')
               : filter === 'my_tasks'
-              ? "You haven't claimed any open chores yet. Check the Open tab to get started!"
+              ? t('tasks.empty_desc_my')
+              : filter === 'completed'
+              ? t('tasks.empty_desc_completed')
               : isParent
-              ? 'Click "Create Chore" above to add the first family task!'
-              : 'Ask a parent to post some chores!'}
+              ? t('tasks.empty_parent_prompt')
+              : t('tasks.empty_desc_open')}
           </p>
-          {isParent && filter === 'all' && (
+          {isParent && (
             <button onClick={() => setIsModalOpen(true)} className="btn-create-chore mt-2">
               <Plus size={18} />
-              <span>Create First Chore</span>
+              <span>{t('tasks.add_first_chore')}</span>
             </button>
           )}
         </div>

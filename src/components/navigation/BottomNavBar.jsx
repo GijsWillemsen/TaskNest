@@ -1,11 +1,14 @@
 import { NavLink } from 'react-router-dom'
 import { CheckSquare, Gift, Settings } from 'lucide-react'
+import { useLanguage } from '../../context/useLanguage'
 
 export default function BottomNavBar() {
+  const { t } = useLanguage()
+
   const navItems = [
-    { to: '/tasks', label: 'Tasks', icon: CheckSquare },
-    { to: '/rewards', label: 'Rewards', icon: Gift },
-    { to: '/settings', label: 'Settings', icon: Settings },
+    { to: '/tasks', label: t('nav.tasks'), icon: CheckSquare },
+    { to: '/rewards', label: t('nav.rewards'), icon: Gift },
+    { to: '/settings', label: t('nav.settings'), icon: Settings },
   ]
 
   return (

@@ -14,6 +14,7 @@ import {
   approveTask,
   deleteTask,
 } from '../../services/taskService'
+import { useLanguage } from '../../context/useLanguage'
 
 export default function TaskCard({
   task,
@@ -24,6 +25,7 @@ export default function TaskCard({
   onError,
   onSuccess,
 }) {
+  const { t, isDutch } = useLanguage()
   const [loading, setLoading] = useState(false)
 
   const isClaimedByMe = task.claimed_by === currentUserId
@@ -34,7 +36,7 @@ export default function TaskCard({
     try {
       const updated = await claimTask(task.id, currentUserId)
       onTaskUpdated(updated)
-      if (onSuccess) onSuccess(`You claimed "${task.title}"!`)
+      if (onSuccess) onSuccess(t('tasks.claimed_success', { title: task.title }))
     } catch (err) {
       if (onError) onError(err.message || 'Failed to claim task.')
     } finally {
@@ -47,7 +49,7 @@ export default function TaskCard({
     try {
       const updated = await finishTask(task.id, currentUserId)
       onTaskUpdated(updated)
-      if (onSuccess) onSuccess(`"${task.title}" marked as done! Waiting for approval.`)
+      if (onSuccess) onSuccess(t('tasks.finished_success', { title: task.title }))
     } catch (err) {
       if (onError) onError(err.message || 'Failed to submit task.')
     } finally {
@@ -60,7 +62,7 @@ export default function TaskCard({
     try {
       const updated = await releaseTask(task.id, currentUserId)
       onTaskUpdated(updated)
-      if (onSuccess) onSuccess(`Released "${task.title}" back to open chores.`)
+      if (onSuccess) onSuccess(t('tasks.released_success', { title: task.title }))
     } catch (err) {
       if (onError) onError(err.message || 'Failed to release task.')
     } finally {
@@ -73,7 +75,7 @@ export default function TaskCard({
     try {
       const updated = await approveTask(task.id, task.claimed_by, task.points_value)
       onTaskUpdated(updated)
-      if (onSuccess) onSuccess(`Approved "${task.title}"! +${task.points_value} points awarded.`)
+      if (onSuccess) onSuccess(t('tasks.approved_success', { title: task.title, points: task.points_value }))
     } catch (err) {
       if (onError) onError(err.message || 'Failed to approve task.')
     } finally {
@@ -82,12 +84,15 @@ export default function TaskCard({
   }
 
   const handleDelete = async () => {
-    if (!window.confirm(`Delete chore "${task.title}"?`)) return
+    const confirmPrompt = isDutch
+      ? `Weet je zeker dat je klusje "${task.title}" wilt verwijderen?`
+      : `Delete chore "${task.title}"?`
+    if (!window.confirm(confirmPrompt)) return
     setLoading(true)
     try {
       await deleteTask(task.id)
       onTaskDeleted(task.id)
-      if (onSuccess) onSuccess(`Chore "${task.title}" removed.`)
+      if (onSuccess) onSuccess(t('tasks.deleted_success', { title: task.title }))
     } catch (err) {
       if (onError) onError(err.message || 'Failed to delete chore.')
     } finally {
@@ -119,10 +124,10 @@ export default function TaskCard({
               onClick={handleApprove}
               className="btn-task-action btn-approve"
               disabled={loading}
-              title="Approve and award points"
+              title={t('tasks.approve_button')}
             >
               <Award size={15} />
-              <span>Approve ({task.points_value})</span>
+              <span>{t('tasks.approve_button')} ({task.points_value})</span>
             </button>
           )}
 
@@ -133,8 +138,8 @@ export default function TaskCard({
                 onClick={handleClaim}
                 className="btn-task-action btn-claim btn-icon-action"
                 disabled={loading}
-                title="Claim chore"
-                aria-label="Claim chore"
+                title={t('tasks.claim_tooltip')}
+                aria-label={t('tasks.claim_tooltip')}
               >
                 <Hand size={16} />
               </button>
@@ -142,8 +147,8 @@ export default function TaskCard({
                 onClick={handleFinish}
                 className="btn-task-action btn-complete btn-icon-action"
                 disabled={loading}
-                title="Mark chore as finished"
-                aria-label="Mark chore as finished"
+                title={t('tasks.finish_tooltip')}
+                aria-label={t('tasks.finish_tooltip')}
               >
                 <Check size={18} strokeWidth={2.6} />
               </button>
@@ -156,8 +161,8 @@ export default function TaskCard({
               <button
                 onClick={handleRelease}
                 className="btn-task-action btn-unclaim btn-icon-action"
-                title="Release chore back to open"
-                aria-label="Release chore back to open"
+                title={t('tasks.release_tooltip')}
+                aria-label={t('tasks.release_tooltip')}
                 disabled={loading}
               >
                 <Undo2 size={15} />
@@ -166,8 +171,8 @@ export default function TaskCard({
                 onClick={handleFinish}
                 className="btn-task-action btn-complete btn-icon-action"
                 disabled={loading}
-                title="Mark chore as finished"
-                aria-label="Mark chore as finished"
+                title={t('tasks.finish_tooltip')}
+                aria-label={t('tasks.finish_tooltip')}
               >
                 <Check size={18} strokeWidth={2.6} />
               </button>
@@ -176,13 +181,13 @@ export default function TaskCard({
 
           {/* Claimant waiting indicator */}
           {task.status === 'pending_approval' && isClaimedByMe && !isParent && (
-            <span className="status-waiting-pill">Under Review ⏳</span>
+            <span className="status-waiting-pill">{t('tasks.under_review')}</span>
           )}
 
           {/* Sibling claimed indicator */}
           {task.status === 'claimed' && isClaimedBySibling && (
             <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)', fontStyle: 'italic' }}>
-              Claimed by family member
+              {t('tasks.claimed_by_family')}
             </span>
           )}
 
@@ -191,7 +196,7 @@ export default function TaskCard({
             <button
               onClick={handleDelete}
               className="btn-task-delete"
-              title="Delete chore"
+              title={t('common.delete')}
               disabled={loading}
             >
               <Trash2 size={15} />
