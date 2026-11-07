@@ -1176,5 +1176,72 @@
   color: #1e40af !important;
 }
 
+/* ==============================================================================
+   Danger Zone Section in Settings
+   ============================================================================== */
+.danger-zone-card {
+  border: 1.5px solid rgba(239, 68, 68, 0.45) !important;
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.05) 0%, rgba(239, 68, 68, 0.02) 100%), var(--bg-surface) !important;
+  box-shadow: 0 4px 18px rgba(239, 68, 68, 0.08) !important;
+}
+
+.danger-zone-card:hover {
+  border-color: rgba(239, 68, 68, 0.7) !important;
+}
+
+.btn-danger-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.25rem;
+  border-radius: var(--radius-md, 12px);
+  border: 1.5px solid var(--discord-red, #ef4444);
+  background: rgba(239, 68, 68, 0.08);
+  color: var(--discord-red, #ef4444);
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.btn-danger-outline:hover:not(:disabled) {
+  background: var(--discord-red, #ef4444);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+}
+
+.btn-danger-solid {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.3rem;
+  border-radius: var(--radius-md, 12px);
+  border: none;
+  background: var(--discord-red, #ef4444);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.btn-danger-solid:hover:not(:disabled) {
+  background: #dc2626;
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-danger-solid:disabled,
+.btn-danger-outline:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+
 
 
