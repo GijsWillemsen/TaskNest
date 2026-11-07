@@ -6,6 +6,7 @@ import {
   Trash2,
   Undo2,
   Award,
+  RotateCw,
 } from 'lucide-react'
 import {
   claimTask,
@@ -30,6 +31,31 @@ export default function TaskCard({
 
   const isClaimedByMe = task.claimed_by === currentUserId
   const isClaimedBySibling = task.claimed_by && !isClaimedByMe
+
+  const formatRecurrenceText = (tObj) => {
+    const { recurrence, recurrence_time, recurrence_day } = tObj
+    if (!recurrence || recurrence === 'none') return null
+
+    let freqText = ''
+    if (recurrence === 'daily') {
+      freqText = t('tasks.repeats_daily')
+    } else if (recurrence === 'weekly') {
+      const dayName = recurrence_day
+        ? (t(`tasks.days.${recurrence_day.toLowerCase()}`) || recurrence_day)
+        : ''
+      freqText = dayName ? t('tasks.repeats_weekly', { day: dayName }) : t('tasks.recurrence_weekly')
+    } else if (recurrence === 'monthly') {
+      freqText = t('tasks.repeats_monthly')
+    } else if (recurrence === 'yearly') {
+      freqText = t('tasks.repeats_yearly')
+    }
+
+    if (recurrence_time) {
+      freqText += ` ${t('tasks.at_time', { time: recurrence_time })}`
+    }
+
+    return freqText
+  }
 
   const handleClaim = async () => {
     setLoading(true)
@@ -73,8 +99,8 @@ export default function TaskCard({
   const handleApprove = async () => {
     setLoading(true)
     try {
-      const updated = await approveTask(task.id, task.claimed_by, task.points_value)
-      onTaskUpdated(updated)
+      const res = await approveTask(task.id, task.claimed_by, task.points_value)
+      onTaskUpdated(res)
       if (onSuccess) onSuccess(t('tasks.approved_success', { title: task.title, points: task.points_value }))
     } catch (err) {
       if (onError) onError(err.message || 'Failed to approve task.')
@@ -102,9 +128,17 @@ export default function TaskCard({
 
   return (
     <div className={`task-card task-card-${task.status}`}>
-      {/* Top row: Title on left, Coin + amount on right */}
+      {/* Top row: Title & Recurrence on left, Coin + amount on right */}
       <div className="task-card-top">
-        <h3 className="task-title">{task.title}</h3>
+        <div className="task-header-left">
+          <h3 className="task-title">{task.title}</h3>
+          {task.recurrence && task.recurrence !== 'none' && (
+            <div className="task-recurrence-badge">
+              <RotateCw size={12} className="recurrence-icon" />
+              <span>{formatRecurrenceText(task)}</span>
+            </div>
+          )}
+        </div>
 
         <div className="task-points-badge" title={`${task.points_value} points`}>
           <Coins size={16} />
