@@ -14,6 +14,7 @@ import RewardCard from './RewardCard'
 import RewardRequestCard from './RewardRequestCard'
 import CreateRewardModal from './CreateRewardModal'
 import { getRewards, getRewardRequests } from '../../services/rewardService'
+import { supabase } from '../../supabaseClient'
 import { useLanguage } from '../../context/useLanguage'
 import '../../styles/rewards.css'
 
@@ -31,7 +32,8 @@ export default function RewardsList({ role, kidId, familyId, points, onPointsRef
   const isParent = role === 'parent'
 
   // Fetch rewards catalog and requests
-  const loadData = useCallback(async () => {
+  const fetchRewardsData = useCallback(async (showLoading = false) => {
+    if (showLoading) setLoading(true)
     try {
       const [rewardsData, requestsData] = await Promise.all([
         getRewards(familyId),
@@ -41,49 +43,77 @@ export default function RewardsList({ role, kidId, familyId, points, onPointsRef
       setRequests(requestsData)
     } catch (err) {
       console.error('Failed to load rewards data:', err)
-      setErrorMessage(err.message || 'Unable to load rewards.')
+      setErrorMessage((prev) => prev || err.message || 'Unable to load rewards.')
     } finally {
       setLoading(false)
     }
   }, [familyId])
 
+  // Initial load + Realtime channel + 3.5s auto-poll heartbeat + window focus listener
   useEffect(() => {
     let isMounted = true
 
-    const init = async () => {
-      try {
-        const [rewardsData, requestsData] = await Promise.all([
-          getRewards(familyId),
-          getRewardRequests(familyId),
-        ])
-        if (isMounted) {
-          setRewards(rewardsData)
-          setRequests(requestsData)
-        }
-      } catch (err) {
-        if (isMounted) {
-          console.error('Init load error:', err)
-          setErrorMessage(err.message || 'Could not load rewards.')
-        }
-      } finally {
-        if (isMounted) setLoading(false)
+    // Initial load without resetting spinner
+    fetchRewardsData(false)
+
+    // 1. Live auto-polling heartbeat every 3.5 seconds
+    const interval = setInterval(() => {
+      if (!document.hidden && isMounted) {
+        fetchRewardsData(false)
+        if (onPointsRefresh) onPointsRefresh()
+      }
+    }, 3500)
+
+    // 2. Immediate refresh when switching back to app/tab
+    const handleVisibility = () => {
+      if (!document.hidden && isMounted) {
+        fetchRewardsData(false)
+        if (onPointsRefresh) onPointsRefresh()
       }
     }
+    window.addEventListener('visibilitychange', handleVisibility)
+    window.addEventListener('focus', handleVisibility)
 
-    init()
+    // 3. Supabase Realtime subscription for rewards and reward requests
+    const channel = supabase
+      .channel(`rewards-live-${familyId || 'global'}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'rewards' },
+        () => {
+          if (isMounted) {
+            fetchRewardsData(false)
+            if (onPointsRefresh) onPointsRefresh()
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'reward_requests' },
+        () => {
+          if (isMounted) {
+            fetchRewardsData(false)
+            if (onPointsRefresh) onPointsRefresh()
+          }
+        }
+      )
+      .subscribe()
 
     return () => {
       isMounted = false
+      clearInterval(interval)
+      window.removeEventListener('visibilitychange', handleVisibility)
+      window.removeEventListener('focus', handleVisibility)
+      supabase.removeChannel(channel)
     }
-  }, [familyId])
+  }, [fetchRewardsData, onPointsRefresh, familyId])
 
   const handleManualRefresh = useCallback(async () => {
-    setLoading(true)
-    await loadData()
+    await fetchRewardsData(true)
     if (onPointsRefresh) {
       onPointsRefresh()
     }
-  }, [loadData, onPointsRefresh])
+  }, [fetchRewardsData, onPointsRefresh])
 
   // Auto-dismiss alerts
   useEffect(() => {

@@ -119,6 +119,77 @@ export function AuthProvider({ children }) {
     }
   }, [fetchProfile])
 
+  // Live profile & points background synchronization (heartbeat + realtime + window focus)
+  useEffect(() => {
+    if (!user?.id) return
+
+    let isMounted = true
+
+    const syncLiveProfile = async () => {
+      if (document.hidden) return
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, role, display_name, theme_preference, points, family_id')
+          .eq('id', user.id)
+          .maybeSingle()
+
+        if (error || !data || !isMounted) return
+
+        setProfile((prev) => {
+          if (!prev) return data
+          if (
+            prev.points !== data.points ||
+            prev.display_name !== data.display_name ||
+            prev.role !== data.role ||
+            prev.theme_preference !== data.theme_preference ||
+            prev.family_id !== data.family_id
+          ) {
+            return { ...prev, ...data }
+          }
+          return prev
+        })
+      } catch {
+        // silent background catch
+      }
+    }
+
+    // 1. Regular heartbeat poll every 3.5 seconds
+    const interval = setInterval(syncLiveProfile, 3500)
+
+    // 2. Instant refresh when app gains focus or becomes visible
+    const handleVisibility = () => {
+      if (!document.hidden) syncLiveProfile()
+    }
+    window.addEventListener('visibilitychange', handleVisibility)
+    window.addEventListener('focus', handleVisibility)
+
+    // 3. Supabase Realtime channel for instant sub-second pushes
+    const channel = supabase
+      .channel(`profile-live-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${user.id}`,
+        },
+        () => {
+          syncLiveProfile()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      isMounted = false
+      clearInterval(interval)
+      window.removeEventListener('visibilitychange', handleVisibility)
+      window.removeEventListener('focus', handleVisibility)
+      supabase.removeChannel(channel)
+    }
+  }, [user?.id])
+
   const signUp = async ({ email, password, role, displayName, themePreference, familyName, inviteCode }) => {
     setLoading(true)
     const cleanEmail = email.trim().toLowerCase()
