@@ -130,6 +130,13 @@ export default function TaskList({ role, currentUserId, familyId, onPointsRefres
   // Filter tasks
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
+      // Role-specific pool eligibility for kids
+      if (!isParent && task.eligible_assignees && Array.isArray(task.eligible_assignees) && task.eligible_assignees.length > 0) {
+        if (!task.eligible_assignees.includes(currentUserId) && task.claimed_by !== currentUserId) {
+          return false
+        }
+      }
+
       // Role-specific and tab filtering
       if (filter === 'open' && task.status !== 'open') return false
       if (filter === 'my_tasks' && (task.claimed_by !== currentUserId || task.status === 'completed')) return false
@@ -146,14 +153,20 @@ export default function TaskList({ role, currentUserId, familyId, onPointsRefres
 
       return true
     })
-  }, [tasks, filter, searchQuery, currentUserId])
+  }, [tasks, filter, searchQuery, currentUserId, isParent])
 
   // Summary counts
   const pendingApprovalCount = tasks.filter((t) => t.status === 'pending_approval').length
   const myActiveCount = tasks.filter(
     (t) => t.claimed_by === currentUserId && t.status === 'claimed'
   ).length
-  const openCount = tasks.filter((t) => t.status === 'open').length
+  const openCount = tasks.filter((t) => {
+    if (t.status !== 'open') return false
+    if (!isParent && t.eligible_assignees && Array.isArray(t.eligible_assignees) && t.eligible_assignees.length > 0) {
+      return t.eligible_assignees.includes(currentUserId)
+    }
+    return true
+  }).length
 
   return (
     <div className="task-section">

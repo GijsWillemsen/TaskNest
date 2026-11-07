@@ -620,7 +620,8 @@
   animation: fadeIn 0.18s ease;
 }
 
-.modal-content {
+.modal-content,
+.modal-card {
   background: var(--bg-surface);
   border-radius: var(--radius-xl);
   border: 1px solid var(--border-glow);
