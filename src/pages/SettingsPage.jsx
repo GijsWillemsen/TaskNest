@@ -9,6 +9,7 @@ import {
   adjustMemberPoints,
   setMemberPoints,
 } from '../services/familyService'
+import { deleteUserAccount } from '../services/profileService'
 import Toast from '../components/common/Toast'
 import {
   User,
@@ -27,12 +28,15 @@ import {
   X,
   Sun,
   Moon,
+  AlertTriangle,
+  Trash2,
+  AlertCircle,
 } from 'lucide-react'
 import '../styles/auth.css'
 import '../styles/tasks.css'
 
 export default function SettingsPage() {
-  const { user, family, familyId, role, points, displayName, signOut, updateDisplayName, refreshProfile } = useAuth()
+  const { user, family, familyId, role, points, displayName, signOut, updateDisplayName, refreshProfile, deleteAccount } = useAuth()
   const { theme, setTheme } = useTheme()
   const { t, lang, setLanguage, isDutch } = useLanguage()
   const [copied, setCopied] = useState(false)
@@ -56,6 +60,11 @@ export default function SettingsPage() {
   const [adjustAmount, setAdjustAmount] = useState(10)
   const [adjustReason, setAdjustReason] = useState('')
   const [adjustLoading, setAdjustLoading] = useState(false)
+
+  // Danger zone account deletion
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const isParent = role === 'parent'
 
@@ -176,6 +185,26 @@ export default function SettingsPage() {
       })
     } finally {
       setAdjustLoading(false)
+    }
+  }
+
+  const handleDeleteAccount = async () => {
+    const trimmed = deleteConfirmText.trim().toUpperCase()
+    if (trimmed !== 'VERWIJDER' && trimmed !== 'DELETE') return
+
+    setIsDeleting(true)
+    try {
+      if (deleteAccount) {
+        await deleteAccount()
+      } else {
+        await deleteUserAccount(user?.id)
+        await signOut()
+      }
+      setShowDeleteModal(false)
+    } catch (err) {
+      console.error('Delete account failed:', err)
+      setToast({ message: t('settings.delete_account_error'), type: 'error' })
+      setIsDeleting(false)
     }
   }
 
@@ -685,6 +714,60 @@ export default function SettingsPage() {
         )}
       </div>
 
+      {/* Danger Zone Card */}
+      <div className="placeholder-card settings-card danger-zone-card" style={{ padding: '1.35rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.1rem' }}>
+          <div className="placeholder-icon" style={{ background: 'rgba(239, 68, 68, 0.15)', color: 'var(--discord-red, #ef4444)' }}>
+            <AlertTriangle size={22} />
+          </div>
+          <div>
+            <h2 style={{ fontSize: '1.1rem', margin: 0, color: 'var(--discord-red, #ef4444)', fontWeight: 800 }}>
+              {t('settings.danger_zone_heading')}
+            </h2>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+              {t('settings.danger_zone_desc')}
+            </span>
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '1rem',
+            padding: '1.1rem 1.25rem',
+            background: 'rgba(239, 68, 68, 0.06)',
+            border: '1px solid rgba(239, 68, 68, 0.25)',
+            borderRadius: '14px',
+          }}
+        >
+          <div>
+            <strong style={{ display: 'block', fontSize: '0.95rem', color: 'var(--text-pure)', marginBottom: '0.25rem' }}>
+              {t('settings.delete_account_btn')}
+            </strong>
+            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)', maxWidth: '440px', lineHeight: 1.4 }}>
+              {isDutch
+                ? 'Verwijder je account, voltooide taken en verdiende punten permanent uit dit gezinsnest.'
+                : 'Permanently remove your account, completed tasks, and earned points from this family nest.'}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setDeleteConfirmText('')
+              setShowDeleteModal(true)
+            }}
+            className="btn-danger-outline"
+          >
+            <Trash2 size={16} />
+            <span>{t('settings.delete_account_btn')}</span>
+          </button>
+        </div>
+      </div>
+
       {/* Parent Manage Points Modal */}
       {adjustMember && (
         <div className="modal-backdrop" onClick={() => !adjustLoading && setAdjustMember(null)}>
@@ -866,6 +949,113 @@ export default function SettingsPage() {
                     : `${isDutch ? 'Opslaan als' : 'Set to'} ${adjustAmount || 0} pts`}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Account Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="modal-backdrop" onClick={() => !isDeleting && setShowDeleteModal(false)}>
+          <div
+            className="modal-content"
+            style={{ maxWidth: '460px', width: '92%', background: 'var(--bg-surface)', border: '1.5px solid rgba(239, 68, 68, 0.45)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <div
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '10px',
+                    background: 'rgba(239, 68, 68, 0.15)',
+                    color: 'var(--discord-red, #ef4444)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <AlertTriangle size={20} />
+                </div>
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-pure)' }}>
+                  {t('settings.delete_account_confirm_title')}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => !isDeleting && setShowDeleteModal(false)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-dim)', cursor: 'pointer', padding: '4px' }}
+                aria-label={t('common.close')}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div
+              style={{
+                padding: '0.9rem 1rem',
+                borderRadius: '12px',
+                background: 'rgba(239, 68, 68, 0.08)',
+                border: '1px solid rgba(239, 68, 68, 0.25)',
+                color: 'var(--text-pure)',
+                fontSize: '0.85rem',
+                lineHeight: 1.45,
+                marginBottom: '1.25rem',
+              }}
+            >
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
+                <AlertCircle size={18} color="var(--discord-red, #ef4444)" style={{ flexShrink: 0, marginTop: '2px' }} />
+                <span>{t('settings.delete_account_warning')}</span>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '1.35rem' }}>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.45rem' }}>
+                {t('settings.delete_account_confirm_prompt')}
+              </label>
+              <input
+                type="text"
+                className="input-field modal-input"
+                placeholder={isDutch ? 'Typ VERWIJDER' : 'Type DELETE'}
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                disabled={isDeleting}
+                autoFocus
+                style={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="modal-btn-cancel"
+                onClick={() => setShowDeleteModal(false)}
+                disabled={isDeleting}
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                type="button"
+                className="btn-danger-solid"
+                onClick={handleDeleteAccount}
+                disabled={
+                  isDeleting ||
+                  !(
+                    deleteConfirmText.trim().toUpperCase() === 'VERWIJDER' ||
+                    deleteConfirmText.trim().toUpperCase() === 'DELETE'
+                  )
+                }
+              >
+                {isDeleting ? (
+                  <span>{t('common.loading')}</span>
+                ) : (
+                  <>
+                    <Trash2 size={16} />
+                    <span>{t('settings.delete_account_btn')}</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>

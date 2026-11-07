@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../supabaseClient'
 import { AuthContext } from './auth-context'
 import { getFamilyDetails } from '../services/familyService'
+import { deleteUserAccount } from '../services/profileService'
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
@@ -236,6 +237,18 @@ export function AuthProvider({ children }) {
     }
   }
 
+  const deleteAccount = async () => {
+    setLoading(true)
+    try {
+      if (user?.id) {
+        await deleteUserAccount(user.id)
+      }
+      await signOut()
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const value = {
     user,
     profile,
@@ -249,6 +262,7 @@ export function AuthProvider({ children }) {
     signUp,
     signIn,
     signOut,
+    deleteAccount,
     resendConfirmation,
     refreshProfile,
     updateDisplayName,
