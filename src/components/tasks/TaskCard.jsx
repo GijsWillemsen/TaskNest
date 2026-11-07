@@ -27,6 +27,7 @@ import {
   cancelTaskTransfer,
 } from '../../services/taskService'
 import { useLanguage } from '../../context/useLanguage'
+import { celebrateTaskComplete, celebrateTaskApproved } from '../../utils/confetti'
 
 export default function TaskCard({
   task,
@@ -40,6 +41,8 @@ export default function TaskCard({
 }) {
   const { t, isDutch } = useLanguage()
   const [loading, setLoading] = useState(false)
+  const [isCelebrated, setIsCelebrated] = useState(false)
+  const [floatingBadge, setFloatingBadge] = useState(null)
 
   const claimantMember = familyMembers.find((m) => m.id === task.claimed_by)
   const isClaimedByMe = task.claimed_by === currentUserId
@@ -113,6 +116,13 @@ export default function TaskCard({
     try {
       const updated = await finishTask(task.id, currentUserId)
       onTaskUpdated(updated)
+      celebrateTaskComplete()
+      setIsCelebrated(true)
+      setFloatingBadge({ text: isDutch ? 'Voltooid! ⏳' : 'Done! ⏳', type: 'points-earned' })
+      setTimeout(() => {
+        setIsCelebrated(false)
+        setFloatingBadge(null)
+      }, 1400)
       if (onSuccess) onSuccess(t('tasks.finished_success', { title: task.title }))
     } catch (err) {
       if (onError) onError(err.message || 'Failed to submit task.')
@@ -139,6 +149,13 @@ export default function TaskCard({
     try {
       const res = await approveTask(task.id, task.claimed_by, task.points_value)
       onTaskUpdated(res)
+      celebrateTaskApproved()
+      setIsCelebrated(true)
+      setFloatingBadge({ text: `+${task.points_value} ${t('common.points')}! 🎉`, type: 'points-earned' })
+      setTimeout(() => {
+        setIsCelebrated(false)
+        setFloatingBadge(null)
+      }, 1400)
       if (onSuccess) onSuccess(t('tasks.approved_success', { title: task.title, points: task.points_value }))
     } catch (err) {
       if (onError) onError(err.message || 'Failed to approve task.')
@@ -266,7 +283,12 @@ export default function TaskCard({
   }
 
   return (
-    <div className={`task-card task-card-${task.status}`}>
+    <div className={`task-card task-card-${task.status} ${isCelebrated ? 'anim-celebrate-card' : ''}`}>
+      {floatingBadge && (
+        <div className={`floating-celebration-badge ${floatingBadge.type}`}>
+          {floatingBadge.text}
+        </div>
+      )}
       {/* Top row: Title, Badges (Recurrence, Assignee, Pool) on left, Coin + amount on right */}
       <div className="task-card-top">
         <div className="task-header-left">

@@ -22,6 +22,7 @@ import {
   Smile,
 } from 'lucide-react'
 import '../../styles/auth.css'
+import { celebrateOnboardingFinish } from '../../utils/confetti'
 
 export default function SignUp() {
   // 4-Step Wizard:
@@ -30,6 +31,7 @@ export default function SignUp() {
   // Step 3: Theme Selection (4 Light / 4 Dark)
   // Step 4: Account Credentials & Family Setup
   const [step, setStep] = useState(1)
+  const [finishedOnboarding, setFinishedOnboarding] = useState(false)
 
   // Step 1: Language
   const { lang, setLanguage, t, isDutch } = useLanguage()
@@ -194,11 +196,17 @@ export default function SignUp() {
 
       await refreshProfile()
 
+      // Celebrate onboarding completion!
+      celebrateOnboardingFinish()
+      setFinishedOnboarding(true)
+
       // Handle unconfirmed email scenario
       if (authData?.user && !authData?.session) {
         showSuccess(t('auth.succ_verify_email'))
       } else {
-        navigate('/tasks')
+        setTimeout(() => {
+          navigate('/tasks')
+        }, 1800)
       }
     } catch (err) {
       console.error('Registration failed:', err)
@@ -225,6 +233,24 @@ export default function SignUp() {
   return (
     <div className="auth-page">
       <div className="auth-card" style={{ maxWidth: '480px' }}>
+        {finishedOnboarding && (
+          <div className="onboarding-celebration-overlay">
+            <div className="onboarding-celebration-box anim-celebrate-card">
+              <div style={{ fontSize: '3.2rem', marginBottom: '0.4rem', animation: 'celebrate-bounce 0.8s infinite alternate' }}>
+                🎉
+              </div>
+              <h2 style={{ fontSize: '1.45rem', margin: '0 0 0.5rem 0', color: 'var(--text-pure)' }}>
+                {isDutch ? 'Hoera! Je nest is klaar!' : 'Hooray! Your nest is ready!'}
+              </h2>
+              <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: 1.45 }}>
+                {isDutch
+                  ? 'Welkom bij TaskNest! Veel plezier met klusjes klaren en beloningen sparen.'
+                  : 'Welcome to TaskNest! Have fun completing chores and earning rewards.'}
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="auth-header">
           <h1 className="auth-title">
             {step === 1 && t('auth.signup_welcome_title')}
