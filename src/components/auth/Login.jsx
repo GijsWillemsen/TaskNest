@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/useAuth'
+import { useLanguage } from '../../context/useLanguage'
 import Toast from '../common/Toast'
 import { Mail, Lock, Eye, EyeOff, LogIn, Send } from 'lucide-react'
 import '../../styles/auth.css'
 
 export default function Login() {
+  const { t, isDutch } = useLanguage()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -27,7 +29,7 @@ export default function Login() {
 
     const cleanEmail = email.trim().toLowerCase()
     if (!cleanEmail || !password) {
-      showError('Please enter both your email and password.')
+      showError(isDutch ? 'Vul zowel je e-mailadres als je wachtwoord in.' : 'Please enter both your email and password.')
       return
     }
 
@@ -42,12 +44,14 @@ export default function Login() {
       if (raw.toLowerCase().includes('email not confirmed')) {
         setUnconfirmedEmail(true)
         showError(
-          'Email not confirmed yet! Please check your inbox for the confirmation link, or disable "Confirm email" in Supabase Auth settings.'
+          isDutch
+            ? 'E-mailadres is nog niet bevestigd! Controleer je inbox voor de bevestigingslink, of schakel "Confirm email" uit in Supabase.'
+            : 'Email not confirmed yet! Please check your inbox for the confirmation link, or disable "Confirm email" in Supabase Auth settings.'
         )
       } else if (raw.toLowerCase().includes('invalid login credentials')) {
-        showError('Wrong credentials! Please check your email and password.')
+        showError(isDutch ? 'Verkeerde inloggegevens! Controleer je e-mail en wachtwoord.' : 'Wrong credentials! Please check your email and password.')
       } else {
-        showError(raw || 'Failed to sign in. Please try again.')
+        showError(raw || (isDutch ? 'Inloggen mislukt. Probeer het opnieuw.' : 'Failed to sign in. Please try again.'))
       }
     } finally {
       setSubmitting(false)
@@ -57,16 +61,16 @@ export default function Login() {
   const handleResend = async () => {
     const cleanEmail = email.trim().toLowerCase()
     if (!cleanEmail) {
-      showError('Please enter your email above to resend the link.')
+      showError(isDutch ? 'Vul hierboven je e-mailadres in om de link opnieuw te sturen.' : 'Please enter your email above to resend the link.')
       return
     }
 
     setResending(true)
     try {
       await resendConfirmation(cleanEmail)
-      showSuccess(`A new confirmation email has been sent to ${cleanEmail}! Please check your inbox.`)
+      showSuccess(isDutch ? `Een nieuwe bevestigingsmail is gestuurd naar ${cleanEmail}!` : `A new confirmation email has been sent to ${cleanEmail}!`)
     } catch (err) {
-      showError(err.message || 'Could not resend confirmation email.')
+      showError(err.message || (isDutch ? 'Kon bevestigingsmail niet opnieuw versturen.' : 'Could not resend confirmation email.'))
     } finally {
       setResending(false)
     }
@@ -76,8 +80,8 @@ export default function Login() {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-header">
-          <h1 className="auth-title">Sign In</h1>
-          <p className="auth-subtitle">Welcome back to your family hub</p>
+          <h1 className="auth-title">{t('auth.login_title')}</h1>
+          <p className="auth-subtitle">{t('auth.login_subtitle')}</p>
         </div>
 
         {toast.message && (
@@ -109,7 +113,7 @@ export default function Login() {
               }}
             >
               <Send size={14} />
-              {resending ? 'Sending link...' : 'Resend confirmation email'}
+              {resending ? t('common.loading') : (isDutch ? 'Bevestigingsmail opnieuw sturen' : 'Resend confirmation email')}
             </button>
           </div>
         )}
@@ -118,7 +122,7 @@ export default function Login() {
           {/* Email Field */}
           <div className="form-group">
             <label className="form-label" htmlFor="email-input">
-              Email Address
+              {t('auth.email_label')}
             </label>
             <div className="input-wrapper">
               <div className="input-icon-left">
@@ -128,7 +132,7 @@ export default function Login() {
                 id="email-input"
                 type="email"
                 className="input-field"
-                placeholder="name@family.com"
+                placeholder="naam@gezin.nl"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
@@ -140,7 +144,7 @@ export default function Login() {
           {/* Password Field */}
           <div className="form-group">
             <label className="form-label" htmlFor="password-input">
-              Password
+              {t('auth.password_label')}
             </label>
             <div className="input-wrapper">
               <div className="input-icon-left">
@@ -170,19 +174,19 @@ export default function Login() {
           {/* Submit */}
           <button type="submit" className="auth-submit-btn" disabled={submitting}>
             {submitting ? (
-              'Signing in...'
+              t('common.loading')
             ) : (
               <>
                 <LogIn size={18} />
-                Sign In
+                {t('auth.login_btn')}
               </>
             )}
           </button>
         </form>
 
         <div className="auth-footer">
-          Don't have an account?
-          <Link to="/signup">Create one now</Link>
+          {t('auth.no_account')}
+          <Link to="/signup">{t('auth.signup_title')}</Link>
         </div>
       </div>
     </div>

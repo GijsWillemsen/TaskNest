@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { CheckCircle2, XCircle, Clock, Coins, Sparkles } from 'lucide-react'
-import { approveRewardRequest, rejectRewardRequest } from '../../services/rewardService'
+import { CheckCircle2, XCircle, Clock, Coins, Sparkles, Ticket } from 'lucide-react'
+import { approveRewardTicket, rejectRewardTicket, redeemRewardTicket } from '../../services/rewardService'
+import { useLanguage } from '../../context/useLanguage'
 
 export default function RewardRequestCard({
   request,
@@ -9,6 +10,7 @@ export default function RewardRequestCard({
   onError,
   onSuccess,
 }) {
+  const { t, isDutch } = useLanguage()
   const [loading, setLoading] = useState(false)
 
   const reward = request.rewards || {
@@ -17,40 +19,74 @@ export default function RewardRequestCard({
     description: '',
   }
 
-  const handleApprove = async () => {
-    if (!window.confirm(`Approve reward "${reward.title}" for ${reward.cost} points?`)) return
+  // Kid decides to use an available ticket from inventory
+  const handleUseTicket = async () => {
+    const confirmPrompt = isDutch
+      ? `Wil je je kaartje voor "${reward.title}" nu inzetten? Je ouder krijgt een melding om het goed te keuren.`
+      : `Use your ticket for "${reward.title}" now? Your parent will be asked to approve it.`
+    if (!window.confirm(confirmPrompt)) return
 
     setLoading(true)
     try {
-      const res = await approveRewardRequest({
-        requestId: request.id,
-        rewardCost: reward.cost,
-        kidId: request.kid_id,
-      })
-      if (onRequestUpdated) {
-        onRequestUpdated(res.updatedRequest)
-      }
+      const updated = await redeemRewardTicket(request.id)
+      if (onRequestUpdated) onRequestUpdated(updated)
       if (onSuccess) {
-        onSuccess(`Approved "${reward.title}"! Deducted ${reward.cost} points.`)
+        onSuccess(isDutch
+          ? `🎟️ Kaartje ingezet voor "${reward.title}"! Wachten op goedkeuring van ouder.`
+          : `🎟️ Ticket submitted for "${reward.title}"! Waiting for parent approval.`
+        )
       }
     } catch (err) {
-      if (onError) onError(err.message || 'Failed to approve request.')
+      if (onError) onError(err.message || 'Failed to use ticket.')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleReject = async () => {
-    if (!window.confirm(`Decline purchase request for "${reward.title}"?`)) return
+  // Parent approves ticket usage
+  const handleApprove = async () => {
+    const confirmPrompt = isDutch
+      ? `Kaartje "${reward.title}" goedkeuren voor gebruik?`
+      : `Approve ticket usage for "${reward.title}"?`
+    if (!window.confirm(confirmPrompt)) return
 
     setLoading(true)
     try {
-      const updated = await rejectRewardRequest(request.id)
+      const res = await approveRewardTicket(request.id)
+      if (onRequestUpdated) {
+        onRequestUpdated(res.updatedRequest || res)
+      }
+      if (onSuccess) {
+        onSuccess(isDutch
+          ? `Goedgekeurd! Kaartje "${reward.title}" is nu gebruikt.`
+          : `Approved! Ticket "${reward.title}" is now used.`
+        )
+      }
+    } catch (err) {
+      if (onError) onError(err.message || 'Failed to approve ticket.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Parent declines ticket usage (returns ticket to kid's available inventory)
+  const handleReject = async () => {
+    const confirmPrompt = isDutch
+      ? `Kaartjesverzoek voor "${reward.title}" nu afwijzen? Het kaartje blijft bewaard in de inventaris van het kind.`
+      : `Decline ticket request for "${reward.title}"? The ticket will remain in the kid's inventory.`
+    if (!window.confirm(confirmPrompt)) return
+
+    setLoading(true)
+    try {
+      const updated = await rejectRewardTicket(request.id)
       if (onRequestUpdated) {
         onRequestUpdated(updated)
       }
       if (onSuccess) {
-        onSuccess(`Declined request for "${reward.title}". No points deducted.`)
+        onSuccess(isDutch
+          ? `Verzoek afgewezen. Kaartje voor "${reward.title}" is bewaard gebleven.`
+          : `Ticket request declined. Ticket preserved for later.`
+        )
       }
     } catch (err) {
       if (onError) onError(err.message || 'Failed to decline request.')
@@ -61,16 +97,29 @@ export default function RewardRequestCard({
 
   const renderStatusBadge = () => {
     switch (request.status) {
+      case 'available':
+        return (
+          <span
+            className="task-status-chip"
+            style={{
+              background: 'rgba(52, 211, 153, 0.15)',
+              color: 'var(--discord-green)',
+              border: '1px solid rgba(52, 211, 153, 0.4)',
+            }}
+          >
+            <Ticket size={12} /> {t('rewards.ticket_ready')}
+          </span>
+        )
       case 'pending':
         return (
           <span className="task-status-chip status-pending_approval">
-            <Clock size={12} /> Pending Approval
+            <Clock size={12} /> {t('rewards.ticket_pending')}
           </span>
         )
       case 'approved':
         return (
           <span className="task-status-chip status-completed">
-            <CheckCircle2 size={12} /> Approved
+            <CheckCircle2 size={12} /> {t('rewards.ticket_used')}
           </span>
         )
       case 'rejected':
@@ -83,7 +132,7 @@ export default function RewardRequestCard({
               border: '1px solid rgba(237, 66, 69, 0.35)',
             }}
           >
-            <XCircle size={12} /> Declined
+            <XCircle size={12} /> {t('rewards.ticket_declined_badge')}
           </span>
         )
       default:
@@ -110,7 +159,7 @@ export default function RewardRequestCard({
           </h3>
           {formattedDate && (
             <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
-              Requested {formattedDate}
+              {isDutch ? 'Gekocht' : 'Purchased'} {formattedDate}
             </span>
           )}
         </div>
@@ -125,22 +174,44 @@ export default function RewardRequestCard({
         <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
           {isParent ? (
             <span>
-              Requested by: {request.profiles?.display_name || 'Kid'}
+              {t('rewards.requested_by', { name: request.profiles?.display_name || (isDutch ? 'Kind' : 'Kid') })}
+            </span>
+          ) : request.status === 'available' ? (
+            <span style={{ color: 'var(--discord-green)', fontWeight: 600 }}>
+              {isDutch ? 'In jouw bezit. Gebruik wanneer jij wilt!' : 'In your pocket. Use whenever you want!'}
             </span>
           ) : request.status === 'approved' ? (
             <span style={{ color: 'var(--discord-green)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-              <Sparkles size={13} /> Unlocked! Enjoy your reward!
+              <Sparkles size={13} /> {t('rewards.ticket_used')}
             </span>
           ) : request.status === 'pending' ? (
             <span style={{ color: 'var(--discord-yellow)' }}>
-              Waiting for parent to approve...
+              {t('rewards.ticket_pending')}
             </span>
           ) : (
-            <span style={{ color: 'var(--discord-red)' }}>Declined by parent</span>
+            <span style={{ color: 'var(--discord-red)' }}>{t('rewards.ticket_declined_badge')}</span>
           )}
         </div>
 
-        {/* Actions for Parent on pending requests */}
+        {/* Kid: Use ticket if available in inventory */}
+        {!isParent && request.status === 'available' && (
+          <button
+            onClick={handleUseTicket}
+            className="btn-redeem"
+            style={{
+              background: 'var(--discord-green)',
+              color: '#090a0f',
+              fontWeight: 700,
+            }}
+            disabled={loading}
+            title={t('rewards.use_ticket')}
+          >
+            <Ticket size={15} />
+            {t('rewards.use_ticket')}
+          </button>
+        )}
+
+        {/* Parent: Actions on pending ticket usage */}
         {isParent && request.status === 'pending' && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <button
@@ -148,20 +219,20 @@ export default function RewardRequestCard({
               className="btn-task-action btn-unclaim"
               style={{ color: 'var(--discord-red)', borderColor: 'rgba(237, 66, 69, 0.4)' }}
               disabled={loading}
-              title="Decline request"
+              title={t('rewards.decline_usage')}
             >
               <XCircle size={15} />
-              Decline
+              {t('rewards.decline_usage')}
             </button>
 
             <button
               onClick={handleApprove}
               className="btn-task-action btn-approve"
               disabled={loading}
-              title="Approve and deduct points"
+              title={t('rewards.approve_usage')}
             >
               <CheckCircle2 size={15} />
-              Approve (-{reward.cost})
+              {t('rewards.approve_usage')}
             </button>
           </div>
         )}
@@ -169,3 +240,4 @@ export default function RewardRequestCard({
     </div>
   )
 }
+

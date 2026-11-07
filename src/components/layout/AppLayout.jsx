@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom'
 import { useAuth } from '../../context/useAuth'
+import { useLanguage } from '../../context/useLanguage'
 import BottomNavBar from '../navigation/BottomNavBar'
 import FamilySetupPrompt from '../family/FamilySetupPrompt'
 import { Coins, Users } from 'lucide-react'
@@ -7,6 +8,7 @@ import '../../styles/auth.css'
 
 export default function AppLayout() {
   const { user, family, familyId, role, points, displayName, refreshProfile } = useAuth()
+  const { t } = useLanguage()
 
   return (
     <div className="dashboard-page" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -28,7 +30,7 @@ export default function AppLayout() {
             }}
           >
             <Users size={16} color="var(--theme-accent, var(--discord-blurple))" />
-            <span>{family?.name || 'Family Nest'}</span>
+            <span>{family?.name || t('nav.family_nest')}</span>
           </div>
         </div>
 

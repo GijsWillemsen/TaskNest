@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Coins, Trash2, ShoppingBag, Sparkles, Lock } from 'lucide-react'
-import { deleteReward, requestReward } from '../../services/rewardService'
+import { Coins, Trash2, Ticket, Sparkles, Lock } from 'lucide-react'
+import { deleteReward, purchaseRewardTicket, redeemRewardTicket } from '../../services/rewardService'
+import { useLanguage } from '../../context/useLanguage'
 
 export default function RewardCard({
   reward,
@@ -13,44 +14,72 @@ export default function RewardCard({
   onError,
   onSuccess,
 }) {
+  const { t, isDutch } = useLanguage()
   const [submitting, setSubmitting] = useState(false)
 
   const currentPoints = Number(kidPoints) || 0
   const canAfford = currentPoints >= reward.cost
   const percentComplete = reward.cost > 0 ? Math.min(100, Math.round((currentPoints / reward.cost) * 100)) : 100
 
-  const handleRequestBuy = async () => {
+  const handleBuyTicket = async () => {
     if (!canAfford) return
-    if (!window.confirm(`Request to buy "${reward.title}" for ${reward.cost} points?`)) return
+    const confirmPrompt = isDutch
+      ? `Wil je een kaartje kopen voor "${reward.title}" voor ${reward.cost} punten?`
+      : `Buy a ticket for "${reward.title}" for ${reward.cost} points?`
+    if (!window.confirm(confirmPrompt)) return
 
     setSubmitting(true)
     try {
-      const newRequest = await requestReward({
+      const res = await purchaseRewardTicket({
         familyId: familyId || reward.family_id,
         rewardId: reward.id,
         kidId,
+        cost: reward.cost,
       })
+      const ticket = res.ticket || res
       if (onRewardRequested) {
-        onRewardRequested(newRequest)
+        onRewardRequested(ticket)
       }
-      if (onSuccess) {
-        onSuccess(`🎉 Request sent for "${reward.title}"! Waiting for parent approval.`)
+
+      // Prompt: Use now or keep for later?
+      const useNowQuestion = isDutch
+        ? `🎉 Kaartje gekocht voor "${reward.title}"!\n\nWil je dit kaartje NU METEEN gebruiken?\n(Klik OK voor "Nu gebruiken", of Annuleren voor "Bewaar voor later")`
+        : `🎉 Ticket purchased for "${reward.title}"!\n\nDo you want to USE this ticket RIGHT NOW?\n(Click OK for "Use Now", or Cancel for "Keep for Later")`
+
+      if (window.confirm(useNowQuestion)) {
+        const usedTicket = await redeemRewardTicket(ticket.id)
+        if (onRewardRequested) {
+          onRewardRequested(usedTicket)
+        }
+        if (onSuccess) {
+          onSuccess(isDutch
+            ? `🎟️ Kaartje voor "${reward.title}" ingezet! Wachten op goedkeuring van ouder.`
+            : `🎟️ Ticket for "${reward.title}" submitted! Waiting for parent approval.`
+          )
+        }
+      } else {
+        if (onSuccess) {
+          onSuccess(t('rewards.ticket_purchased', { title: reward.title }))
+        }
       }
     } catch (err) {
-      if (onError) onError(err.message || 'Failed to submit reward request.')
+      if (onError) onError(err.message || 'Failed to buy ticket.')
     } finally {
       setSubmitting(false)
     }
   }
 
   const handleDelete = async () => {
-    if (!window.confirm(`Delete reward "${reward.title}" from the catalog?`)) return
+    const confirmPrompt = isDutch
+      ? `Weet je zeker dat je de beloning "${reward.title}" wilt verwijderen?`
+      : `Delete reward "${reward.title}" from the catalog?`
+    if (!window.confirm(confirmPrompt)) return
 
     setSubmitting(true)
     try {
       await deleteReward(reward.id)
       if (onRewardDeleted) onRewardDeleted(reward.id)
-      if (onSuccess) onSuccess(`Reward "${reward.title}" removed.`)
+      if (onSuccess) onSuccess(isDutch ? `Beloning "${reward.title}" verwijderd.` : `Reward "${reward.title}" removed.`)
     } catch (err) {
       if (onError) onError(err.message || 'Failed to delete reward.')
     } finally {
@@ -79,8 +108,8 @@ export default function RewardCard({
       {!isParent && (
         <div className="reward-progress-box">
           <div className="progress-labels">
-            <span>Progress</span>
-            <span>{canAfford ? 'Ready to purchase!' : `${percentComplete}%`}</span>
+            <span>{isDutch ? 'Voortgang' : 'Progress'}</span>
+            <span>{canAfford ? (isDutch ? 'Beschikbaar!' : 'Ready!') : `${percentComplete}%`}</span>
           </div>
           <div className="progress-track">
             <div
@@ -96,35 +125,35 @@ export default function RewardCard({
         <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
           {canAfford ? (
             <span style={{ color: 'var(--discord-yellow)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-              <Sparkles size={13} /> Affordable
+              <Sparkles size={13} /> {t('rewards.affordable')}
             </span>
           ) : (
-            <span>🪙 {reward.cost - currentPoints} needed</span>
+            <span>🪙 {reward.cost - currentPoints} {t('rewards.needed')}</span>
           )}
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          {/* Kid: Request to Buy Button */}
+          {/* Kid: Buy Ticket Button */}
           {!isParent && (
             <button
-              onClick={handleRequestBuy}
+              onClick={handleBuyTicket}
               className="btn-redeem"
               style={{
                 background: canAfford ? 'var(--discord-orange)' : 'var(--bg-surface-elevated)',
                 color: canAfford ? '#ffffff' : 'var(--text-dim)',
               }}
               disabled={!canAfford || submitting}
-              title={canAfford ? 'Send request to parent' : `Need ${reward.cost - currentPoints} more points`}
+              title={canAfford ? t('rewards.buy_ticket') : `Need ${reward.cost - currentPoints} more points`}
             >
               {canAfford ? (
                 <>
-                  <ShoppingBag size={15} />
-                  {submitting ? 'Requesting...' : 'Request to Buy'}
+                  <Ticket size={15} />
+                  {submitting ? t('common.loading') : t('rewards.buy_ticket')}
                 </>
               ) : (
                 <>
                   <Lock size={14} />
-                  Locked
+                  {isDutch ? 'Vergrendeld' : 'Locked'}
                 </>
               )}
             </button>
@@ -135,7 +164,7 @@ export default function RewardCard({
             <button
               onClick={handleDelete}
               className="btn-task-delete"
-              title="Delete reward"
+              title={t('common.delete')}
               disabled={submitting}
             >
               <Trash2 size={15} />
@@ -146,3 +175,4 @@ export default function RewardCard({
     </div>
   )
 }
+

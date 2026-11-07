@@ -47,20 +47,135 @@ export async function deleteReward(rewardId) {
 }
 
 /**
- * Kid requests to buy a reward
+ * Kid purchases a reward ticket with points.
+ * 1. Checks if kid has enough points.
+ * 2. Deducts points immediately from kid's profile.
+ * 3. Adds ticket to reward_requests with status 'available'.
  */
-export async function requestReward({ familyId, rewardId, kidId }) {
-  const { data, error } = await supabase
+export async function purchaseRewardTicket({ familyId, rewardId, kidId, cost }) {
+  const pointsCost = Number(cost) || 0
+
+  // Verify points
+  const { data: profile, error: profileErr } = await supabase
+    .from('profiles')
+    .select('points')
+    .eq('id', kidId)
+    .single()
+
+  if (profileErr) throw profileErr
+  const currentPoints = profile?.points ?? 0
+
+  if (currentPoints < pointsCost) {
+    throw new Error('Not enough points to purchase this ticket.')
+  }
+
+  // Deduct points
+  const remainingPoints = currentPoints - pointsCost
+  const { error: deductErr } = await supabase
+    .from('profiles')
+    .update({ points: remainingPoints })
+    .eq('id', kidId)
+
+  if (deductErr) throw deductErr
+
+  // Create ticket in inventory
+  const { data: ticket, error: ticketErr } = await supabase
     .from('reward_requests')
     .insert([
       {
         family_id: familyId,
         reward_id: rewardId,
         kid_id: kidId,
-        status: 'pending',
+        status: 'available',
       },
     ])
-    .select()
+    .select(`
+      id,
+      family_id,
+      reward_id,
+      kid_id,
+      status,
+      created_at,
+      rewards:reward_id (id, title, description, cost),
+      profiles:kid_id (id, role, points, display_name)
+    `)
+    .single()
+
+  if (ticketErr) throw ticketErr
+
+  return { ticket, remainingPoints }
+}
+
+/**
+ * Kid requests to use an existing ticket from their inventory.
+ * Sets status from 'available' to 'pending'.
+ */
+export async function redeemRewardTicket(ticketId) {
+  const { data, error } = await supabase
+    .from('reward_requests')
+    .update({ status: 'pending' })
+    .eq('id', ticketId)
+    .select(`
+      id,
+      family_id,
+      reward_id,
+      kid_id,
+      status,
+      created_at,
+      rewards:reward_id (id, title, description, cost),
+      profiles:kid_id (id, role, points, display_name)
+    `)
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+// Deprecated alias for backwards compatibility
+export const useRewardTicket = redeemRewardTicket
+
+/**
+ * Parent approves ticket usage. Sets status to 'approved' (used).
+ */
+export async function approveRewardTicket(ticketId) {
+  const { data, error } = await supabase
+    .from('reward_requests')
+    .update({ status: 'approved' })
+    .eq('id', ticketId)
+    .select(`
+      id,
+      family_id,
+      reward_id,
+      kid_id,
+      status,
+      created_at,
+      rewards:reward_id (id, title, description, cost),
+      profiles:kid_id (id, role, points, display_name)
+    `)
+    .single()
+
+  if (error) throw error
+  return { updatedRequest: data }
+}
+
+/**
+ * Parent declines ticket usage. Returns ticket to 'available' so kid still has it!
+ */
+export async function rejectRewardTicket(ticketId) {
+  const { data, error } = await supabase
+    .from('reward_requests')
+    .update({ status: 'available' })
+    .eq('id', ticketId)
+    .select(`
+      id,
+      family_id,
+      reward_id,
+      kid_id,
+      status,
+      created_at,
+      rewards:reward_id (id, title, description, cost),
+      profiles:kid_id (id, role, points, display_name)
+    `)
     .single()
 
   if (error) throw error
@@ -68,7 +183,7 @@ export async function requestReward({ familyId, rewardId, kidId }) {
 }
 
 /**
- * Fetch all reward requests for a family
+ * Fetch all reward requests / tickets for a family
  */
 export async function getRewardRequests(familyId) {
   try {
@@ -116,60 +231,8 @@ export async function getRewardRequests(familyId) {
 }
 
 /**
- * Parent approves a reward request:
- * 1. Checks if the kid still has enough points.
- * 2. Deducts the reward cost from profiles.points.
- * 3. Sets request status to 'approved'.
+ * Aliases for backwards compatibility
  */
-export async function approveRewardRequest({ requestId, rewardCost, kidId }) {
-  const { data: kidProfile, error: profileErr } = await supabase
-    .from('profiles')
-    .select('points')
-    .eq('id', kidId)
-    .single()
-
-  if (profileErr) throw profileErr
-
-  const currentPoints = kidProfile?.points ?? 0
-  const cost = Number(rewardCost) || 0
-
-  if (currentPoints < cost) {
-    throw new Error(
-      `Not enough points! Required: ${cost} pts, Current: ${currentPoints} pts.`
-    )
-  }
-
-  const remainingPoints = currentPoints - cost
-  const { error: deductErr } = await supabase
-    .from('profiles')
-    .update({ points: remainingPoints })
-    .eq('id', kidId)
-
-  if (deductErr) throw deductErr
-
-  const { data: updatedRequest, error: reqErr } = await supabase
-    .from('reward_requests')
-    .update({ status: 'approved' })
-    .eq('id', requestId)
-    .select()
-    .single()
-
-  if (reqErr) throw reqErr
-
-  return { updatedRequest, remainingPoints }
-}
-
-/**
- * Parent rejects a reward request
- */
-export async function rejectRewardRequest(requestId) {
-  const { data, error } = await supabase
-    .from('reward_requests')
-    .update({ status: 'rejected' })
-    .eq('id', requestId)
-    .select()
-    .single()
-
-  if (error) throw error
-  return data
-}
+export const requestReward = purchaseRewardTicket
+export const approveRewardRequest = approveRewardTicket
+export const rejectRewardRequest = rejectRewardTicket
