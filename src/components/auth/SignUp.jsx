@@ -18,21 +18,31 @@ import {
   ArrowLeft,
   Sparkles,
   CheckCircle2,
+  Crown,
+  Smile,
 } from 'lucide-react'
 import '../../styles/auth.css'
 
 export default function SignUp() {
-  // 3-Step Wizard: 1: Role & Name, 2: Theme Selection, 3: Account & Family
+  // 4-Step Wizard:
+  // Step 1: Language Preference (NL / EN)
+  // Step 2: Role (Parent / Kid) & Display Name
+  // Step 3: Theme Selection (4 Light / 4 Dark)
+  // Step 4: Account Credentials & Family Setup
   const [step, setStep] = useState(1)
 
-  // Step 1: Role & Display Name
+  // Step 1: Language
+  const { lang, setLanguage, t, isDutch } = useLanguage()
+
+  // Step 2: Role & Display Name
   const [role, setRole] = useState('parent') // 'parent' or 'kid'
   const [displayName, setDisplayName] = useState('')
 
-  // Step 2: Theme Selection (default: 'candy')
+  // Step 3: Theme Selection
   const [themeChoice, setThemeChoice] = useState('candy')
+  const [themeFilter, setThemeFilter] = useState('all') // 'all', 'light', 'dark'
 
-  // Step 3: Account Credentials & Family Setup
+  // Step 4: Account Credentials & Family Setup
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -44,19 +54,33 @@ export default function SignUp() {
 
   const { signUp, refreshProfile } = useAuth()
   const { setTheme } = useTheme()
-  const { t, isDutch } = useLanguage()
   const navigate = useNavigate()
 
   const showError = (msg) => setToast({ message: msg, type: 'error' })
   const showSuccess = (msg) => setToast({ message: msg, type: 'success' })
 
-  // Synchronize active theme preview as the user selects a theme in Step 2
+  // Synchronize active theme preview as the user selects a theme in Step 3
   useEffect(() => {
     setTheme(themeChoice)
   }, [themeChoice, setTheme])
 
-  // Step 1 -> Step 2 validation
+  // Simple password security checker: min 6 chars, letters + numbers
+  const isPasswordSecure = (pwd) => {
+    if (!pwd || pwd.length < 6) return false
+    const hasLetter = /[a-zA-Z]/.test(pwd)
+    const hasNumber = /[0-9]/.test(pwd)
+    return hasLetter && hasNumber
+  }
+
+  // Step 1 -> Step 2
   const handleStep1Next = (e) => {
+    e.preventDefault()
+    setToast({ message: '', type: 'error' })
+    setStep(2)
+  }
+
+  // Step 2 -> Step 3 validation
+  const handleStep2Next = (e) => {
     e.preventDefault()
     setToast({ message: '', type: 'error' })
 
@@ -73,23 +97,24 @@ export default function SignUp() {
       setFamilyName(defaultFamily)
     }
 
-    setStep(2)
-  }
-
-  // Step 2 -> Step 3 validation
-  const handleStep2Next = (e) => {
-    e.preventDefault()
-    setToast({ message: '', type: 'error' })
     setStep(3)
   }
 
-  // Step 3 Final Submit
+  // Step 3 -> Step 4 validation
+  const handleStep3Next = (e) => {
+    e.preventDefault()
+    setToast({ message: '', type: 'error' })
+    setStep(4)
+  }
+
+  // Step 4 Final Submit
   const handleFinalSubmit = async (e) => {
     e.preventDefault()
     setToast({ message: '', type: 'error' })
 
     const cleanEmail = email.trim().toLowerCase()
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    // Realistic email regex verifying recipient, @, domain, and valid TLD (.com, .nl, etc.)
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 
     if (!cleanEmail || !password) {
       showError(t('auth.err_enter_credentials'))
@@ -103,6 +128,11 @@ export default function SignUp() {
 
     if (password.length < 6) {
       showError(t('auth.err_password_len'))
+      return
+    }
+
+    if (!isPasswordSecure(password)) {
+      showError(t('auth.err_password_insecure'))
       return
     }
 
@@ -125,7 +155,7 @@ export default function SignUp() {
 
     setSubmitting(true)
     try {
-      // 1. Sign up user with metadata (family_name & invite_code included so PostgreSQL trigger links automatically)
+      // 1. Sign up user with metadata
       const authData = await signUp({
         email: cleanEmail,
         password,
@@ -185,19 +215,28 @@ export default function SignUp() {
     }
   }
 
+  // Filtered themes for Step 3
+  const visibleThemes = THEMES.filter((th) => {
+    if (themeFilter === 'light') return th.mode === 'light'
+    if (themeFilter === 'dark') return th.mode === 'dark'
+    return true
+  })
+
   return (
     <div className="auth-page">
       <div className="auth-card" style={{ maxWidth: '480px' }}>
         <div className="auth-header">
           <h1 className="auth-title">
-            {step === 1 && t('auth.signup_title')}
-            {step === 2 && t('auth.choose_theme_title')}
-            {step === 3 && t('auth.final_step_title')}
+            {step === 1 && t('auth.signup_welcome_title')}
+            {step === 2 && t('auth.signup_title')}
+            {step === 3 && t('auth.choose_theme_title')}
+            {step === 4 && t('auth.final_step_title')}
           </h1>
           <p className="auth-subtitle">
-            {step === 1 && `${t('auth.step_indicator', { step: 1 })}: ${t('auth.step1_title')}`}
-            {step === 2 && `${t('auth.step_indicator', { step: 2 })}: ${t('auth.choose_theme_sub')}`}
-            {step === 3 && (role === 'parent' ? `${t('auth.step_indicator', { step: 3 })}: ${t('auth.step3_parent_title')}` : `${t('auth.step_indicator', { step: 3 })}: ${t('auth.step3_kid_title')}`)}
+            {step === 1 && `${t('auth.step_indicator', { step: 1 })}: ${t('auth.step1_lang_title')}`}
+            {step === 2 && `${t('auth.step_indicator', { step: 2 })}: ${t('auth.step2_role_title')}`}
+            {step === 3 && `${t('auth.step_indicator', { step: 3 })}: ${t('auth.choose_theme_sub')}`}
+            {step === 4 && (role === 'parent' ? `${t('auth.step_indicator', { step: 4 })}: ${t('auth.step4_parent_title')}` : `${t('auth.step_indicator', { step: 4 })}: ${t('auth.step4_kid_title')}`)}
           </p>
         </div>
 
@@ -208,9 +247,9 @@ export default function SignUp() {
           onClose={() => setToast({ message: '', type: 'error' })}
         />
 
-        {/* Step Progress Bar */}
-        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
-          {[1, 2, 3].map((s) => (
+        {/* 4-Step Progress Bar */}
+        <div style={{ display: 'flex', gap: '0.45rem', marginBottom: '1.5rem' }}>
+          {[1, 2, 3, 4].map((s) => (
             <div
               key={s}
               style={{
@@ -225,68 +264,105 @@ export default function SignUp() {
           ))}
         </div>
 
-        {/* STEP 1: Role & Display Name */}
+        {/* STEP 1: Language Selection */}
         {step === 1 && (
           <form onSubmit={handleStep1Next} className="auth-form">
             <div className="form-group">
-              <label className="form-label">{t('auth.step1_title')}</label>
-              <div className="role-selector-grid">
+              <label className="form-label">{t('auth.step1_lang_sub')}</label>
+              <div className="role-cards-container">
                 <button
                   type="button"
-                  className={`role-choice-card ${role === 'parent' ? 'selected' : ''}`}
-                  onClick={() => setRole('parent')}
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '0.35rem',
-                    padding: '1rem 0.75rem',
-                    borderRadius: '16px',
-                    border: role === 'parent' ? '2.5px solid var(--theme-accent, var(--discord-purple))' : '1px solid var(--border-subtle)',
-                    background: role === 'parent' ? 'rgba(155, 89, 182, 0.14)' : 'var(--bg-surface-elevated)',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                  }}
+                  className={`role-card-btn ${lang === 'nl' ? 'active-parent' : ''}`}
+                  onClick={() => setLanguage('nl')}
                 >
-                  <div style={{ fontSize: '1.75rem' }}>👑</div>
-                  <strong style={{ color: 'var(--text-pure)', fontSize: '1.05rem' }}>{t('auth.parent_role')}</strong>
-                  <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', textAlign: 'center' }}>
-                    {t('auth.parent_desc')}
-                  </span>
+                  <div className="role-icon-wrapper" style={{ fontSize: '1.8rem', background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.35)' }}>
+                    🇳🇱
+                  </div>
+                  <span className="role-name">{t('auth.lang_dutch_label')}</span>
+                  <span className="role-desc">{t('auth.lang_dutch_desc')}</span>
+                  {lang === 'nl' && (
+                    <div style={{ marginTop: '0.45rem' }}>
+                      <CheckCircle2 size={16} color="var(--theme-accent, var(--discord-blurple))" />
+                    </div>
+                  )}
                 </button>
 
                 <button
                   type="button"
-                  className={`role-choice-card ${role === 'kid' ? 'selected' : ''}`}
-                  onClick={() => setRole('kid')}
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '0.35rem',
-                    padding: '1rem 0.75rem',
-                    borderRadius: '16px',
-                    border: role === 'kid' ? '2.5px solid var(--discord-yellow)' : '1px solid var(--border-subtle)',
-                    background: role === 'kid' ? 'rgba(254, 231, 92, 0.14)' : 'var(--bg-surface-elevated)',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                  }}
+                  className={`role-card-btn ${lang === 'en' ? 'active-parent' : ''}`}
+                  onClick={() => setLanguage('en')}
                 >
-                  <div style={{ fontSize: '1.75rem' }}>🚀</div>
-                  <strong style={{ color: 'var(--text-pure)', fontSize: '1.05rem' }}>{t('auth.kid_role')}</strong>
-                  <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', textAlign: 'center' }}>
-                    {t('auth.kid_desc')}
-                  </span>
+                  <div className="role-icon-wrapper" style={{ fontSize: '1.8rem', background: 'rgba(59, 130, 246, 0.12)', border: '1px solid rgba(59, 130, 246, 0.35)' }}>
+                    🇬🇧
+                  </div>
+                  <span className="role-name">{t('auth.lang_english_label')}</span>
+                  <span className="role-desc">{t('auth.lang_english_desc')}</span>
+                  {lang === 'en' && (
+                    <div style={{ marginTop: '0.45rem' }}>
+                      <CheckCircle2 size={16} color="var(--theme-accent, var(--discord-blurple))" />
+                    </div>
+                  )}
                 </button>
               </div>
             </div>
 
-            <div className="form-group" style={{ marginTop: '0.5rem' }}>
+            <button type="submit" className="auth-submit-btn" style={{ marginTop: '1rem' }}>
+              <span>{t('common.next')}</span>
+              <ArrowRight size={18} />
+            </button>
+          </form>
+        )}
+
+        {/* STEP 2: Role & Display Name */}
+        {step === 2 && (
+          <form onSubmit={handleStep2Next} className="auth-form">
+            <div className="form-group">
+              <label className="form-label">{t('auth.step2_role_title')}</label>
+              <div className="role-cards-container">
+                <button
+                  type="button"
+                  className={`role-card-btn ${role === 'parent' ? 'active-parent' : ''}`}
+                  onClick={() => setRole('parent')}
+                >
+                  <div className="role-icon-wrapper role-icon-parent">
+                    <Crown size={22} />
+                  </div>
+                  <span className="role-name">{t('auth.parent_role')}</span>
+                  <span className="role-desc">{t('auth.parent_desc')}</span>
+                  {role === 'parent' && (
+                    <div style={{ marginTop: '0.45rem' }}>
+                      <CheckCircle2 size={16} color="var(--theme-accent, var(--discord-blurple))" />
+                    </div>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  className={`role-card-btn ${role === 'kid' ? 'active-kid' : ''}`}
+                  onClick={() => setRole('kid')}
+                >
+                  <div className="role-icon-wrapper role-icon-kid">
+                    <Smile size={22} />
+                  </div>
+                  <span className="role-name">{t('auth.kid_role')}</span>
+                  <span className="role-desc">{t('auth.kid_desc')}</span>
+                  {role === 'kid' && (
+                    <div style={{ marginTop: '0.45rem' }}>
+                      <CheckCircle2 size={16} color="var(--discord-yellow)" />
+                    </div>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="form-group" style={{ marginTop: '0.65rem' }}>
               <label htmlFor="displayName" className="form-label">
                 {t('auth.name_question')}
               </label>
               <div className="input-wrapper">
-                <User size={18} className="input-icon" />
+                <div className="input-icon-left">
+                  <User size={18} />
+                </div>
                 <input
                   id="displayName"
                   type="text"
@@ -299,20 +375,109 @@ export default function SignUp() {
               </div>
             </div>
 
-            <button type="submit" className="auth-submit-btn" style={{ marginTop: '1rem' }}>
-              <span>{t('auth.continue_theme')}</span>
-              <ArrowRight size={18} />
-            </button>
+            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
+              <button
+                type="button"
+                className="signout-btn"
+                onClick={() => setStep(1)}
+                style={{ flex: '0 0 auto', padding: '0.8rem 1rem', borderRadius: '12px' }}
+              >
+                <ArrowLeft size={16} /> {t('auth.back')}
+              </button>
+              <button type="submit" className="auth-submit-btn" style={{ flex: 1, margin: 0 }}>
+                <span>{t('auth.continue_theme')}</span>
+                <ArrowRight size={18} />
+              </button>
+            </div>
           </form>
         )}
 
-        {/* STEP 2: 5 Themes Selection */}
-        {step === 2 && (
-          <form onSubmit={handleStep2Next} className="auth-form">
+        {/* STEP 3: 8 Balanced Themes Selection (4 Light / 4 Dark) */}
+        {step === 3 && (
+          <form onSubmit={handleStep3Next} className="auth-form">
             <div className="form-group">
               <label className="form-label">{t('auth.choose_theme_sub')}</label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', maxHeight: '360px', overflowY: 'auto', paddingRight: '4px' }}>
-                {THEMES.map((th) => {
+
+              {/* Light / Dark Filter Tabs */}
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '0.35rem',
+                  marginBottom: '0.75rem',
+                  background: 'var(--bg-surface-elevated)',
+                  padding: '3px',
+                  borderRadius: '12px',
+                  border: '1px solid var(--border-subtle)',
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setThemeFilter('all')}
+                  style={{
+                    flex: 1,
+                    padding: '0.4rem',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: themeFilter === 'all' ? 'var(--theme-accent, var(--discord-blurple))' : 'transparent',
+                    color: themeFilter === 'all' ? '#ffffff' : 'var(--text-muted)',
+                    fontWeight: 700,
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  {t('auth.filter_all_themes')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setThemeFilter('light')}
+                  style={{
+                    flex: 1,
+                    padding: '0.4rem',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: themeFilter === 'light' ? 'var(--theme-accent, var(--discord-blurple))' : 'transparent',
+                    color: themeFilter === 'light' ? '#ffffff' : 'var(--text-muted)',
+                    fontWeight: 700,
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  {t('auth.filter_light_themes')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setThemeFilter('dark')}
+                  style={{
+                    flex: 1,
+                    padding: '0.4rem',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: themeFilter === 'dark' ? 'var(--theme-accent, var(--discord-blurple))' : 'transparent',
+                    color: themeFilter === 'dark' ? '#ffffff' : 'var(--text-muted)',
+                    fontWeight: 700,
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  {t('auth.filter_dark_themes')}
+                </button>
+              </div>
+
+              {/* Theme Cards List */}
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.65rem',
+                  maxHeight: '340px',
+                  overflowY: 'auto',
+                  paddingRight: '4px',
+                }}
+              >
+                {visibleThemes.map((th) => {
                   const isSelected = themeChoice === th.id
                   return (
                     <div
@@ -356,13 +521,27 @@ export default function SignUp() {
 
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.4rem' }}>
-                          <strong style={{ color: 'var(--text-pure)', fontSize: '0.95rem' }}>
+                          <strong style={{ color: 'var(--text-pure)', fontSize: '0.94rem' }}>
                             {th.name}
                           </strong>
-                          {isSelected && <CheckCircle2 size={16} color="var(--theme-accent, var(--discord-blurple))" />}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <span
+                              style={{
+                                fontSize: '0.7rem',
+                                padding: '2px 6px',
+                                borderRadius: '6px',
+                                background: th.mode === 'light' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(99, 102, 241, 0.15)',
+                                color: th.mode === 'light' ? 'var(--discord-yellow)' : 'var(--theme-accent)',
+                                fontWeight: 700,
+                              }}
+                            >
+                              {th.mode === 'light' ? t('auth.light_theme_badge') : t('auth.dark_theme_badge')}
+                            </span>
+                            {isSelected && <CheckCircle2 size={16} color="var(--theme-accent, var(--discord-blurple))" />}
+                          </div>
                         </div>
-                        <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.35 }}>
-                          {th.description}
+                        <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.77rem', color: 'var(--text-muted)', lineHeight: 1.35 }}>
+                          {isDutch ? th.description : (th.descriptionEn || th.description)}
                         </p>
                       </div>
                     </div>
@@ -375,7 +554,7 @@ export default function SignUp() {
               <button
                 type="button"
                 className="signout-btn"
-                onClick={() => setStep(1)}
+                onClick={() => setStep(2)}
                 style={{ flex: '0 0 auto', padding: '0.8rem 1rem', borderRadius: '12px' }}
               >
                 <ArrowLeft size={16} /> {t('auth.back')}
@@ -388,15 +567,17 @@ export default function SignUp() {
           </form>
         )}
 
-        {/* STEP 3: Account & Family Setup */}
-        {step === 3 && (
-          <form onSubmit={handleFinalSubmit} className="auth-form">
+        {/* STEP 4: Account Credentials & Family Setup */}
+        {step === 4 && (
+          <form onSubmit={handleFinalSubmit} className="auth-form" noValidate>
             <div className="form-group">
               <label htmlFor="email" className="form-label">
                 {t('auth.email_label')}
               </label>
               <div className="input-wrapper">
-                <Mail size={18} className="input-icon" />
+                <div className="input-icon-left">
+                  <Mail size={18} />
+                </div>
                 <input
                   id="email"
                   type="email"
@@ -415,11 +596,13 @@ export default function SignUp() {
                 {t('auth.password_label')}
               </label>
               <div className="input-wrapper">
-                <Lock size={18} className="input-icon" />
+                <div className="input-icon-left">
+                  <Lock size={18} />
+                </div>
                 <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  className="input-field"
+                  className="input-field input-field-with-toggle"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -429,12 +612,34 @@ export default function SignUp() {
                 />
                 <button
                   type="button"
-                  className="password-toggle"
+                  className="password-toggle-btn"
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label="Toggle password visibility"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
+              </div>
+
+              {/* Password strength & security hint */}
+              <div
+                style={{
+                  marginTop: '0.3rem',
+                  fontSize: '0.75rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  color: isPasswordSecure(password) ? 'var(--discord-green)' : 'var(--text-dim)',
+                  fontWeight: 500,
+                }}
+              >
+                {isPasswordSecure(password) ? (
+                  <>
+                    <CheckCircle2 size={13} color="var(--discord-green)" />
+                    <span>{t('auth.password_strength_good')}</span>
+                  </>
+                ) : (
+                  <span>{t('auth.password_hint')}</span>
+                )}
               </div>
             </div>
 
@@ -445,7 +650,9 @@ export default function SignUp() {
                   {t('auth.family_name_label')}
                 </label>
                 <div className="input-wrapper">
-                  <Users size={18} className="input-icon" />
+                  <div className="input-icon-left">
+                    <Users size={18} />
+                  </div>
                   <input
                     id="familyName"
                     type="text"
@@ -466,7 +673,9 @@ export default function SignUp() {
                   {t('auth.invite_code_label')}
                 </label>
                 <div className="input-wrapper">
-                  <KeyRound size={18} className="input-icon" />
+                  <div className="input-icon-left">
+                    <KeyRound size={18} />
+                  </div>
                   <input
                     id="inviteCode"
                     type="text"
@@ -489,7 +698,7 @@ export default function SignUp() {
               <button
                 type="button"
                 className="signout-btn"
-                onClick={() => setStep(2)}
+                onClick={() => setStep(3)}
                 disabled={submitting}
                 style={{ flex: '0 0 auto', padding: '0.8rem 1rem', borderRadius: '12px' }}
               >

@@ -1,24 +1,28 @@
-/* TaskNest - Sleek Dark Monochrome with Discord Role Accents */
+/* TaskNest Theme Engine - 4 Balanced Light Themes & 4 Overhauled Dark Themes */
 
+/* ============================================================
+   DARK THEMES (4 Overhauled)
+   ============================================================ */
+
+/* 1. Obsidian Luxe 🖤 - Overhauled Sleek Carbon Minimalist */
 :root,
 [data-theme='obsidian'],
 [data-theme='modern'] {
-  /* 5. Obsidian Luxe 🖤 - Mature Minimalist Luxury */
   --bg-deep: #09090b;
-  --bg-surface: #141416;
-  --bg-surface-elevated: #1e1e24;
-  --bg-surface-hover: #26262d;
-  --border-subtle: #27272a;
-  --border-glow: #3f3f46;
+  --bg-surface: #121216;
+  --bg-surface-elevated: #1c1c23;
+  --bg-surface-hover: #272732;
+  --border-subtle: #2e2e3a;
+  --border-glow: #6366f1;
 
   --text-pure: #fafafa;
   --text-main: #f4f4f5;
   --text-muted: #a1a1aa;
   --text-dim: #71717a;
 
-  --theme-accent: #ffffff;
-  --theme-accent-hover: #e4e4e7;
-  --theme-accent-glow: rgba(255, 255, 255, 0.2);
+  --theme-accent: #6366f1;
+  --theme-accent-hover: #4f46e5;
+  --theme-accent-glow: rgba(99, 102, 241, 0.25);
 
   --discord-blurple: #818cf8;
   --discord-teal: #2dd4bf;
@@ -34,19 +38,137 @@
   --radius-md: 10px;
   --radius-sm: 6px;
 
-  --shadow-card: 0 10px 30px -4px rgba(0, 0, 0, 0.75);
+  --shadow-card: 0 8px 24px -2px rgba(0, 0, 0, 0.75);
   --shadow-modal: 0 20px 48px -6px rgba(0, 0, 0, 0.9);
 
   color-scheme: dark;
 }
 
-/* 1. Candy Pop 🍬 - Childish, Bubbly Sky-Blue, 3D Purple Depth */
+/* 2. Cyber Neon 👾 - Overhauled Midnight Space & Glowing Cyan/Mint */
+[data-theme='arcade'] {
+  --bg-deep: #080a12;
+  --bg-surface: #0e1424;
+  --bg-surface-elevated: #151e36;
+  --bg-surface-hover: #1e2b4c;
+  --border-subtle: #00f2fe;
+  --border-glow: #00e676;
+
+  --text-pure: #ffffff;
+  --text-main: #e2f1ff;
+  --text-muted: #7ca5cf;
+  --text-dim: #4d759f;
+
+  --theme-accent: #00e676;
+  --theme-accent-hover: #00c853;
+  --theme-accent-glow: rgba(0, 230, 118, 0.35);
+
+  --discord-blurple: #00f2fe;
+  --discord-teal: #00e5ff;
+  --discord-green: #00e676;
+  --discord-purple: #d500f9;
+  --discord-pink: #ff007f;
+  --discord-yellow: #ffd600;
+  --discord-orange: #ff9100;
+  --discord-red: #ff1744;
+
+  --radius-xl: 16px;
+  --radius-lg: 12px;
+  --radius-md: 8px;
+  --radius-sm: 6px;
+
+  --shadow-card: 0 4px 0 #00f2fe, 0 10px 28px rgba(0, 242, 254, 0.22);
+  --shadow-modal: 0 6px 0 #00f2fe, 0 18px 40px rgba(0, 0, 0, 0.9);
+
+  color-scheme: dark;
+}
+
+/* 3. Cosmic Sunset 🌌 - Overhauled Nebula Violet & Radiant Rose */
+[data-theme='sunset'] {
+  --bg-deep: #120a21;
+  --bg-surface: #1e1236;
+  --bg-surface-elevated: #2d1a4f;
+  --bg-surface-hover: #3d236b;
+  --border-subtle: #f43f5e;
+  --border-glow: #fbbf24;
+
+  --text-pure: #fff1f2;
+  --text-main: #ffe4e6;
+  --text-muted: #f472b6;
+  --text-dim: #c084fc;
+
+  --theme-accent: #f43f5e;
+  --theme-accent-hover: #e11d48;
+  --theme-accent-glow: rgba(244, 63, 94, 0.35);
+
+  --discord-blurple: #ec4899;
+  --discord-teal: #14b8a6;
+  --discord-green: #10b981;
+  --discord-purple: #a855f7;
+  --discord-pink: #f43f5e;
+  --discord-yellow: #fbbf24;
+  --discord-orange: #f97316;
+  --discord-red: #ef4444;
+
+  --radius-xl: 20px;
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+
+  --shadow-card: 0 4px 18px rgba(244, 63, 94, 0.25), 0 8px 24px rgba(0, 0, 0, 0.6);
+  --shadow-modal: 0 6px 30px rgba(244, 63, 94, 0.35), 0 18px 42px rgba(0, 0, 0, 0.85);
+
+  color-scheme: dark;
+}
+
+/* 4. Emerald Forest 🌲 - Overhauled Evergreen Pine & Warm Gold */
+[data-theme='forest'] {
+  --bg-deep: #07140e;
+  --bg-surface: #0e241b;
+  --bg-surface-elevated: #16372a;
+  --bg-surface-hover: #1e4a39;
+  --border-subtle: #10b981;
+  --border-glow: #eab308;
+
+  --text-pure: #f0fdf4;
+  --text-main: #dcfce7;
+  --text-muted: #86efac;
+  --text-dim: #4ade80;
+
+  --theme-accent: #10b981;
+  --theme-accent-hover: #059669;
+  --theme-accent-glow: rgba(16, 185, 129, 0.3);
+
+  --discord-blurple: #10b981;
+  --discord-teal: #14b8a6;
+  --discord-green: #22c55e;
+  --discord-purple: #8b5cf6;
+  --discord-pink: #f43f5e;
+  --discord-yellow: #eab308;
+  --discord-orange: #f97316;
+  --discord-red: #ef4444;
+
+  --radius-xl: 20px;
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+
+  --shadow-card: 0 4px 18px rgba(16, 185, 129, 0.22), 0 8px 24px rgba(0, 0, 0, 0.6);
+  --shadow-modal: 0 6px 30px rgba(16, 185, 129, 0.3), 0 18px 42px rgba(0, 0, 0, 0.85);
+
+  color-scheme: dark;
+}
+
+/* ============================================================
+   LIGHT THEMES (4 Balanced)
+   ============================================================ */
+
+/* 5. Candy Pop 🍬 - Bubbly Sky-Blue with 3D Purple Depth */
 [data-theme='candy'],
 [data-theme='playful'] {
   --bg-deep: #e0f2fe;
   --bg-surface: #ffffff;
-  --bg-surface-elevated: #f1f5f9;
-  --bg-surface-hover: #e2e8f0;
+  --bg-surface-elevated: #f0f7ff;
+  --bg-surface-hover: #e0edf9;
   --border-subtle: #581c87;
   --border-glow: #7c3aed;
 
@@ -79,118 +201,118 @@
   color-scheme: light;
 }
 
-/* 2. Arcade Neon 👾 - Retro Gamer Cyberpunk */
-[data-theme='arcade'] {
-  --bg-deep: #0b0f19;
-  --bg-surface: #131b2e;
-  --bg-surface-elevated: #1a2640;
-  --bg-surface-hover: #223254;
-  --border-subtle: #00f2fe;
-  --border-glow: #00e676;
+/* 6. Pastel Blossom 🌸 - Soft Lavender, Rose & Raspberry */
+[data-theme='blossom'] {
+  --bg-deep: #fdf2f8;
+  --bg-surface: #ffffff;
+  --bg-surface-elevated: #fdf4ff;
+  --bg-surface-hover: #fae8ff;
+  --border-subtle: #be185d;
+  --border-glow: #ec4899;
 
-  --text-pure: #ffffff;
-  --text-main: #e2f1ff;
-  --text-muted: #7ca5cf;
-  --text-dim: #4d759f;
+  --text-pure: #500724;
+  --text-main: #831843;
+  --text-muted: #9d174d;
+  --text-dim: #db2777;
 
-  --theme-accent: #00e676;
-  --theme-accent-hover: #00c853;
-  --theme-accent-glow: rgba(0, 230, 118, 0.3);
-
-  --discord-blurple: #00f2fe;
-  --discord-teal: #00e5ff;
-  --discord-green: #00e676;
-  --discord-purple: #d500f9;
-  --discord-pink: #ff007f;
-  --discord-yellow: #ffd600;
-  --discord-orange: #ff9100;
-  --discord-red: #ff1744;
-
-  --radius-xl: 16px;
-  --radius-lg: 12px;
-  --radius-md: 8px;
-  --radius-sm: 6px;
-
-  --shadow-card: 0 4px 0 #00f2fe, 0 8px 24px rgba(0, 242, 254, 0.2);
-  --shadow-modal: 0 6px 0 #00f2fe, 0 16px 36px rgba(0, 0, 0, 0.85);
-
-  color-scheme: dark;
-}
-
-/* 3. Sunset Glow 🌅 - Warm Dusk Violet & Amber Rose */
-[data-theme='sunset'] {
-  --bg-deep: #1a102f;
-  --bg-surface: #261642;
-  --bg-surface-elevated: #361f5c;
-  --bg-surface-hover: #452875;
-  --border-subtle: #f43f5e;
-  --border-glow: #fbbf24;
-
-  --text-pure: #fff1f2;
-  --text-main: #ffe4e6;
-  --text-muted: #f472b6;
-  --text-dim: #c084fc;
-
-  --theme-accent: #f43f5e;
-  --theme-accent-hover: #e11d48;
-  --theme-accent-glow: rgba(244, 63, 94, 0.3);
+  --theme-accent: #ec4899;
+  --theme-accent-hover: #db2777;
+  --theme-accent-glow: rgba(236, 72, 153, 0.25);
 
   --discord-blurple: #ec4899;
-  --discord-teal: #14b8a6;
-  --discord-green: #10b981;
+  --discord-teal: #0d9488;
+  --discord-green: #16a34a;
   --discord-purple: #a855f7;
-  --discord-pink: #f43f5e;
-  --discord-yellow: #fbbf24;
-  --discord-orange: #f97316;
-  --discord-red: #ef4444;
+  --discord-pink: #db2777;
+  --discord-yellow: #ca8a04;
+  --discord-orange: #ea580c;
+  --discord-red: #e11d48;
 
-  --radius-xl: 20px;
+  --radius-xl: 24px;
+  --radius-lg: 18px;
+  --radius-md: 14px;
+  --radius-sm: 10px;
+
+  --shadow-card: 0 5px 0 #be185d, 0 10px 24px rgba(190, 24, 93, 0.12);
+  --shadow-modal: 0 8px 0 #be185d, 0 20px 40px rgba(0, 0, 0, 0.2);
+
+  color-scheme: light;
+}
+
+/* 7. Sunny Citrus 🍋 - Warm Vanilla Cream & Amber Gold */
+[data-theme='citrus'] {
+  --bg-deep: #fefce8;
+  --bg-surface: #ffffff;
+  --bg-surface-elevated: #fffbeb;
+  --bg-surface-hover: #fef3c7;
+  --border-subtle: #b45309;
+  --border-glow: #f59e0b;
+
+  --text-pure: #451a03;
+  --text-main: #78350f;
+  --text-muted: #92400e;
+  --text-dim: #d97706;
+
+  --theme-accent: #f59e0b;
+  --theme-accent-hover: #d97706;
+  --theme-accent-glow: rgba(245, 158, 11, 0.25);
+
+  --discord-blurple: #f59e0b;
+  --discord-teal: #0891b2;
+  --discord-green: #16a34a;
+  --discord-purple: #9333ea;
+  --discord-pink: #ec4899;
+  --discord-yellow: #d97706;
+  --discord-orange: #ea580c;
+  --discord-red: #dc2626;
+
+  --radius-xl: 24px;
+  --radius-lg: 18px;
+  --radius-md: 14px;
+  --radius-sm: 10px;
+
+  --shadow-card: 0 5px 0 #b45309, 0 10px 24px rgba(180, 83, 9, 0.12);
+  --shadow-modal: 0 8px 0 #b45309, 0 20px 40px rgba(0, 0, 0, 0.2);
+
+  color-scheme: light;
+}
+
+/* 8. Nordic Breeze ☁️ - Minimalist White & Royal Sapphire */
+[data-theme='breeze'] {
+  --bg-deep: #f0f9ff;
+  --bg-surface: #ffffff;
+  --bg-surface-elevated: #e0f2fe;
+  --bg-surface-hover: #bae6fd;
+  --border-subtle: #1e40af;
+  --border-glow: #2563eb;
+
+  --text-pure: #0f172a;
+  --text-main: #1e293b;
+  --text-muted: #1e40af;
+  --text-dim: #2563eb;
+
+  --theme-accent: #2563eb;
+  --theme-accent-hover: #1d4ed8;
+  --theme-accent-glow: rgba(37, 99, 235, 0.25);
+
+  --discord-blurple: #2563eb;
+  --discord-teal: #0d9488;
+  --discord-green: #16a34a;
+  --discord-purple: #7c3aed;
+  --discord-pink: #db2777;
+  --discord-yellow: #ca8a04;
+  --discord-orange: #ea580c;
+  --discord-red: #dc2626;
+
+  --radius-xl: 22px;
   --radius-lg: 16px;
   --radius-md: 12px;
   --radius-sm: 8px;
 
-  --shadow-card: 0 4px 18px rgba(244, 63, 94, 0.2), 0 8px 24px rgba(0, 0, 0, 0.5);
-  --shadow-modal: 0 6px 30px rgba(244, 63, 94, 0.3), 0 16px 40px rgba(0, 0, 0, 0.8);
+  --shadow-card: 0 5px 0 #1e40af, 0 10px 24px rgba(30, 64, 175, 0.12);
+  --shadow-modal: 0 8px 0 #1e40af, 0 20px 40px rgba(0, 0, 0, 0.2);
 
-  color-scheme: dark;
-}
-
-/* 4. Nordic Forest 🌲 - Deep Pine, Moss & Warm Gold */
-[data-theme='forest'] {
-  --bg-deep: #0c1914;
-  --bg-surface: #142820;
-  --bg-surface-elevated: #1c382d;
-  --bg-surface-hover: #264a3c;
-  --border-subtle: #2d5a48;
-  --border-glow: #eab308;
-
-  --text-pure: #f0fdf4;
-  --text-main: #dcfce7;
-  --text-muted: #86efac;
-  --text-dim: #4ade80;
-
-  --theme-accent: #10b981;
-  --theme-accent-hover: #059669;
-  --theme-accent-glow: rgba(16, 185, 129, 0.25);
-
-  --discord-blurple: #10b981;
-  --discord-teal: #14b8a6;
-  --discord-green: #22c55e;
-  --discord-purple: #8b5cf6;
-  --discord-pink: #f43f5e;
-  --discord-yellow: #eab308;
-  --discord-orange: #f97316;
-  --discord-red: #ef4444;
-
-  --radius-xl: 20px;
-  --radius-lg: 15px;
-  --radius-md: 10px;
-  --radius-sm: 6px;
-
-  --shadow-card: 0 8px 24px -2px rgba(12, 25, 20, 0.65);
-  --shadow-modal: 0 16px 40px -4px rgba(0, 0, 0, 0.85);
-
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 *,
