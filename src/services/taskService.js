@@ -53,7 +53,7 @@ export function calculateNextDueDate(recurrence, currentDueDate, recurrenceTime,
 }
 
 /**
- * Fetch all tasks for the active family
+ * Fetch all tasks for the active family, automatically excluding completed tasks older than 24 hours
  */
 export async function getTasks(familyId) {
   let query = supabase.from('tasks').select('*').order('created_at', { ascending: false })
@@ -64,7 +64,36 @@ export async function getTasks(familyId) {
 
   const { data, error } = await query
   if (error) throw error
-  return data || []
+
+  // Filter out completed tasks older than 24 hours (86,400,000 ms)
+  const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000
+  const now = Date.now()
+
+  const validTasks = (data || []).filter((task) => {
+    if (task.status === 'completed') {
+      const completionTime = task.completed_at || task.created_at
+      if (completionTime && (now - new Date(completionTime).getTime() > TWENTY_FOUR_HOURS_MS)) {
+        return false
+      }
+    }
+    return true
+  })
+
+  // Silently prune expired completed tasks older than 24 hours in the background
+  try {
+    const expiredTimestamp = new Date(now - TWENTY_FOUR_HOURS_MS).toISOString()
+    supabase
+      .from('tasks')
+      .delete()
+      .eq('status', 'completed')
+      .lt('created_at', expiredTimestamp)
+      .then(() => {})
+      .catch(() => {})
+  } catch {
+    // silent background prune
+  }
+
+  return validTasks
 }
 
 /**
@@ -165,10 +194,16 @@ export async function claimTask(taskId, userId) {
 }
 
 /**
- * Any family member can finish a task (either an open task directly, or their claimed task).
- * Sets status to 'pending_approval' and records claimant as userId.
+ * Any family member can finish a task.
+ * - If done by a PARENT: automatically completes without needing approval, awards points immediately!
+ * - If done by a KID: sets status to 'pending_approval' for parent verification.
  */
-export async function finishTask(taskId, userId) {
+export async function finishTask(taskId, userId, role = 'kid', pointsValue = null) {
+  if (role === 'parent') {
+    // Parent auto-approval: completes directly and awards points immediately!
+    return await approveTask(taskId, userId, pointsValue)
+  }
+
   const { data, error } = await supabase
     .from('tasks')
     .update({
@@ -204,21 +239,44 @@ export async function releaseTask(taskId, userId) {
 }
 
 /**
- * Parent approves a task:
- * 1. Sets task status to 'completed'
+ * Approves a task:
+ * 1. Sets task status to 'completed' and records completed_at timestamp
  * 2. Awards points to claimant's profile
  * 3. If recurring, automatically spawns the next task instance for the family
  */
 export async function approveTask(taskId, claimantId, pointsValue) {
-  // Step 1: Update task status to 'completed'
-  const { data: updatedTask, error: taskError } = await supabase
+  const nowIso = new Date().toISOString()
+
+  // Step 1: Update task status to 'completed' and record completed_at
+  let updatedTask
+  const { data: updateWithTimestamp, error: taskError } = await supabase
     .from('tasks')
-    .update({ status: 'completed' })
+    .update({
+      status: 'completed',
+      completed_at: nowIso,
+      claimed_by: claimantId || undefined,
+    })
     .eq('id', taskId)
     .select()
     .single()
 
-  if (taskError) throw taskError
+  if (taskError) {
+    // If completed_at column hasn't been migrated yet in database, fallback
+    const { data: updateFallback, error: fallbackError } = await supabase
+      .from('tasks')
+      .update({
+        status: 'completed',
+        claimed_by: claimantId || undefined,
+      })
+      .eq('id', taskId)
+      .select()
+      .single()
+
+    if (fallbackError) throw fallbackError
+    updatedTask = { ...updateFallback, completed_at: nowIso }
+  } else {
+    updatedTask = updateWithTimestamp
+  }
 
   // Step 2: Award points
   if (claimantId && pointsValue) {

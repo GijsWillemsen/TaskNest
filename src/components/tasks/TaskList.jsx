@@ -143,7 +143,18 @@ export default function TaskList({ role, currentUserId, familyId, onPointsRefres
 
   // Filter tasks
   const filteredTasks = useMemo(() => {
+    const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000
+    const now = Date.now()
+
     return tasks.filter((task) => {
+      // Finished tasks disappear after 24 hours
+      if (task.status === 'completed') {
+        const compTime = task.completed_at || task.created_at
+        if (compTime && now - new Date(compTime).getTime() > TWENTY_FOUR_HOURS_MS) {
+          return false
+        }
+      }
+
       // Role-specific pool eligibility for kids
       if (!isParent && task.eligible_assignees && Array.isArray(task.eligible_assignees) && task.eligible_assignees.length > 0) {
         if (!task.eligible_assignees.includes(currentUserId) && task.claimed_by !== currentUserId) {
@@ -170,6 +181,8 @@ export default function TaskList({ role, currentUserId, familyId, onPointsRefres
   }, [tasks, filter, searchQuery, currentUserId, isParent])
 
   // Summary counts
+  const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000
+  const now = Date.now()
   const pendingApprovalCount = tasks.filter((t) => t.status === 'pending_approval').length
   const myActiveCount = tasks.filter(
     (t) => t.claimed_by === currentUserId && t.status === 'claimed'
@@ -180,6 +193,11 @@ export default function TaskList({ role, currentUserId, familyId, onPointsRefres
       return t.eligible_assignees.includes(currentUserId)
     }
     return true
+  }).length
+  const completedCount = tasks.filter((t) => {
+    if (t.status !== 'completed') return false
+    const compTime = t.completed_at || t.created_at
+    return !compTime || now - new Date(compTime).getTime() <= TWENTY_FOUR_HOURS_MS
   }).length
 
   return (
@@ -264,7 +282,7 @@ export default function TaskList({ role, currentUserId, familyId, onPointsRefres
             className={`filter-tab ${filter === 'completed' ? 'active' : ''}`}
             onClick={() => setFilter('completed')}
           >
-            {t('tasks.tab_completed')}
+            {t('tasks.tab_completed')} ({completedCount})
           </button>
 
           <button

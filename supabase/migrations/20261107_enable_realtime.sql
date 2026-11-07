@@ -10,3 +10,4 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.profiles;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.rewards;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.reward_requests;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.families;
+
