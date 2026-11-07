@@ -101,10 +101,15 @@ export default function TaskList({ role, currentUserId, familyId, onPointsRefres
     setSuccessMessage(`Chore "${newTask.title}" added to the family list!`)
   }
 
-  const handleTaskUpdated = (updatedTask) => {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === updatedTask.id ? { ...t, ...updatedTask } : t))
-    )
+  const handleTaskUpdated = (updatedResult) => {
+    const taskObj = updatedResult?.updatedTask || updatedResult
+    setTasks((prev) => {
+      let list = prev.map((t) => (t.id === taskObj.id ? { ...t, ...taskObj } : t))
+      if (updatedResult?.nextTask && !list.some((t) => t.id === updatedResult.nextTask.id)) {
+        list = [updatedResult.nextTask, ...list]
+      }
+      return list
+    })
     if (onPointsRefresh) {
       onPointsRefresh()
     }

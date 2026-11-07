@@ -46,6 +46,10 @@ CREATE TABLE public.tasks (
   description TEXT DEFAULT '',
   points_value INTEGER NOT NULL DEFAULT 10,
   status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'claimed', 'pending_approval', 'completed')),
+  recurrence TEXT NOT NULL DEFAULT 'none' CHECK (recurrence IN ('none', 'daily', 'weekly', 'monthly', 'yearly')),
+  recurrence_time TEXT DEFAULT NULL,
+  recurrence_day TEXT DEFAULT NULL,
+  due_date TIMESTAMPTZ DEFAULT NULL,
   claimed_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ DEFAULT now()
 );

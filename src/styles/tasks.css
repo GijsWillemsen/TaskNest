@@ -627,6 +627,8 @@
   box-shadow: var(--shadow-modal);
   width: 100%;
   max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
   padding: 1.75rem;
   position: relative;
   animation: modalSlideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -848,4 +850,162 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* =========================================================
+   TASK RECURRENCE STYLES
+   ========================================================= */
+
+.task-recurrence-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: rgba(88, 101, 242, 0.12);
+  color: var(--theme-accent, var(--discord-blurple));
+  border: 1px solid rgba(88, 101, 242, 0.28);
+  margin-top: 0.25rem;
+  width: fit-content;
+}
+
+.recurrence-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(85px, 1fr));
+  gap: 0.45rem;
+}
+
+.recurrence-choice-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.6rem 0.35rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface-elevated);
+  border: 1.5px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.recurrence-choice-btn:hover {
+  background: var(--bg-surface-hover);
+  border-color: var(--border-glow);
+  color: var(--text-pure);
+}
+
+.recurrence-choice-btn.active {
+  border-color: var(--theme-accent, var(--discord-blurple));
+  background: rgba(88, 101, 242, 0.15);
+  color: var(--text-pure);
+  box-shadow: 0 0 12px rgba(88, 101, 242, 0.25);
+}
+
+.recurrence-details-box {
+  background: var(--bg-surface-elevated);
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 0.85rem;
+  margin-top: 0.5rem;
+  animation: fadeIn 0.15s ease;
+}
+
+.quick-time-chips {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.quick-time-chip {
+  padding: 0.35rem 0.6rem;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.quick-time-chip:hover {
+  color: var(--text-pure);
+  border-color: var(--border-glow);
+}
+
+.quick-time-chip.active {
+  background: var(--theme-accent, var(--discord-blurple));
+  color: #ffffff;
+  border-color: transparent;
+}
+
+.quick-time-chip.clear-chip {
+  padding: 0.35rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.weekday-selector {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.35rem;
+}
+
+.weekday-chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.45rem 0;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-subtle);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.weekday-chip:hover {
+  color: var(--text-pure);
+  border-color: var(--border-glow);
+}
+
+.weekday-chip.active {
+  border-color: var(--theme-accent, var(--discord-blurple));
+  background: rgba(88, 101, 242, 0.2);
+  color: var(--text-pure);
+}
+
+/* Playful Theme Overrides for Recurrence */
+[data-theme='playful'] .recurrence-choice-btn.active,
+[data-theme='candy'] .recurrence-choice-btn.active {
+  border: 2px solid #7c3aed !important;
+  background: rgba(124, 58, 237, 0.16) !important;
+  color: #581c87 !important;
+  box-shadow: 0 3px 0 #7c3aed !important;
+}
+
+[data-theme='playful'] .weekday-chip.active,
+[data-theme='candy'] .weekday-chip.active {
+  border: 2px solid #7c3aed !important;
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 0 #4c1d95 !important;
+}
+
+[data-theme='playful'] .task-recurrence-badge {
+  background: #f3e8ff !important;
+  color: #6b21a8 !important;
+  border: 1.5px solid #c084fc !important;
+  font-weight: 700 !important;
+}
+
 
