@@ -11,6 +11,9 @@ import {
   XCircle,
   User,
   UserCheck,
+  ArrowLeftRight,
+  Users,
+  X,
 } from 'lucide-react'
 import {
   claimTask,
@@ -19,6 +22,9 @@ import {
   approveTask,
   revertTask,
   deleteTask,
+  requestTaskTransfer,
+  acceptTaskTransfer,
+  cancelTaskTransfer,
 } from '../../services/taskService'
 import { useLanguage } from '../../context/useLanguage'
 
@@ -39,6 +45,16 @@ export default function TaskCard({
   const isClaimedByMe = task.claimed_by === currentUserId
   const isClaimedBySibling = task.claimed_by && !isClaimedByMe
   const assigneeName = claimantMember?.display_name || ''
+
+  const currentMember = familyMembers.find((m) => m.id === currentUserId)
+  const currentUserName = currentMember?.display_name || ''
+
+  // Is task parent-allocated to a specific person upon creation?
+  const isParentAllocated = Boolean(task.assigned_to)
+
+  // Is task in a restricted pool where only certain people can claim it?
+  const isPoolRestricted = task.eligible_assignees && Array.isArray(task.eligible_assignees) && task.eligible_assignees.length > 0
+  const isEligibleToClaim = !isPoolRestricted || isParent || task.eligible_assignees.includes(currentUserId)
 
   const formatRecurrenceText = (tObj) => {
     const { recurrence, recurrence_time, recurrence_day } = tObj
@@ -196,9 +212,62 @@ export default function TaskCard({
     }
   }
 
+  const handleRequestTransfer = async () => {
+    setLoading(true)
+    try {
+      const updated = await requestTaskTransfer(task.id, currentUserId, currentUserName)
+      onTaskUpdated(updated)
+      if (onSuccess) {
+        onSuccess(
+          isDutch
+            ? `Overnameverzoek voor "${task.title}" verzonden!`
+            : `Transfer request for "${task.title}" sent!`
+        )
+      }
+    } catch (err) {
+      if (onError) onError(err.message || 'Failed to request transfer.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleAcceptTransfer = async () => {
+    setLoading(true)
+    try {
+      const updated = await acceptTaskTransfer(task.id)
+      onTaskUpdated(updated)
+      if (onSuccess) {
+        onSuccess(
+          isDutch
+            ? `Klusje "${task.title}" overgedragen aan ${task.transfer_requested_name || 'gezinslid'}!`
+            : `Chore "${task.title}" transferred to ${task.transfer_requested_name || 'family member'}!`
+        )
+      }
+    } catch (err) {
+      if (onError) onError(err.message || 'Failed to transfer chore.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCancelTransfer = async () => {
+    setLoading(true)
+    try {
+      const updated = await cancelTaskTransfer(task.id)
+      onTaskUpdated(updated)
+      if (onSuccess) {
+        onSuccess(isDutch ? 'Overnameverzoek geannuleerd.' : 'Transfer request cancelled.')
+      }
+    } catch (err) {
+      if (onError) onError(err.message || 'Failed to cancel transfer.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className={`task-card task-card-${task.status}`}>
-      {/* Top row: Title, Badges (Recurrence, Assignee) on left, Coin + amount on right */}
+      {/* Top row: Title, Badges (Recurrence, Assignee, Pool) on left, Coin + amount on right */}
       <div className="task-card-top">
         <div className="task-header-left">
           <h3 className="task-title">{task.title}</h3>
@@ -207,6 +276,12 @@ export default function TaskCard({
               <div className="task-recurrence-badge">
                 <RotateCw size={12} className="recurrence-icon" />
                 <span>{formatRecurrenceText(task)}</span>
+              </div>
+            )}
+            {isPoolRestricted && task.status === 'open' && (
+              <div className="task-assigned-pill" style={{ background: 'rgba(99, 102, 241, 0.15)', borderColor: 'var(--discord-blurple)' }}>
+                <Users size={12} />
+                <span>{t('tasks.pool_restricted_badge')}</span>
               </div>
             )}
             {task.status === 'claimed' && (
@@ -234,6 +309,76 @@ export default function TaskCard({
       </div>
 
       {task.description && <p className="task-description">{task.description}</p>}
+
+      {/* Transfer Request Banner for current claimant or parent */}
+      {task.status === 'claimed' && task.transfer_requested_by && (isClaimedByMe || isParent) && (
+        <div
+          style={{
+            margin: '0.75rem 0 0.5rem 0',
+            padding: '0.65rem 0.85rem',
+            borderRadius: '12px',
+            background: 'rgba(254, 231, 92, 0.12)',
+            border: '1.5px solid var(--discord-yellow)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '0.5rem',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.84rem', color: 'var(--text-pure)' }}>
+            <ArrowLeftRight size={15} color="var(--discord-yellow)" />
+            <span>
+              <strong>{task.transfer_requested_name || (isDutch ? 'Een gezinslid' : 'A member')}</strong>{' '}
+              {isDutch ? 'wil dit klusje graag overnemen!' : 'wants to take over this chore!'}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+            <button
+              onClick={handleAcceptTransfer}
+              disabled={loading}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                padding: '0.35rem 0.65rem',
+                borderRadius: '8px',
+                border: 'none',
+                background: 'var(--discord-green)',
+                color: '#090a0f',
+                fontWeight: 800,
+                fontSize: '0.78rem',
+                cursor: 'pointer',
+              }}
+            >
+              <Check size={13} strokeWidth={2.5} />
+              <span>{t('tasks.transfer_accept')}</span>
+            </button>
+
+            <button
+              onClick={handleCancelTransfer}
+              disabled={loading}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                padding: '0.35rem 0.55rem',
+                borderRadius: '8px',
+                border: '1px solid var(--border-subtle)',
+                background: 'var(--bg-surface)',
+                color: 'var(--text-muted)',
+                fontWeight: 700,
+                fontSize: '0.78rem',
+                cursor: 'pointer',
+              }}
+            >
+              <X size={13} />
+              <span>{t('tasks.transfer_decline')}</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Footer & Actions */}
       <div className="task-card-footer" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
@@ -288,24 +433,32 @@ export default function TaskCard({
           {/* Open chore: Claim (Hand icon) or Finish directly (Check mark) */}
           {task.status === 'open' && (
             <>
-              <button
-                onClick={handleClaim}
-                className="btn-task-action btn-claim btn-icon-action"
-                disabled={loading}
-                title={t('tasks.claim_tooltip')}
-                aria-label={t('tasks.claim_tooltip')}
-              >
-                <Hand size={16} />
-              </button>
-              <button
-                onClick={handleFinish}
-                className="btn-task-action btn-complete btn-icon-action"
-                disabled={loading}
-                title={t('tasks.finish_tooltip')}
-                aria-label={t('tasks.finish_tooltip')}
-              >
-                <Check size={18} strokeWidth={2.6} />
-              </button>
+              {isEligibleToClaim ? (
+                <>
+                  <button
+                    onClick={handleClaim}
+                    className="btn-task-action btn-claim btn-icon-action"
+                    disabled={loading}
+                    title={t('tasks.claim_tooltip')}
+                    aria-label={t('tasks.claim_tooltip')}
+                  >
+                    <Hand size={16} />
+                  </button>
+                  <button
+                    onClick={handleFinish}
+                    className="btn-task-action btn-complete btn-icon-action"
+                    disabled={loading}
+                    title={t('tasks.finish_tooltip')}
+                    aria-label={t('tasks.finish_tooltip')}
+                  >
+                    <Check size={18} strokeWidth={2.6} />
+                  </button>
+                </>
+              ) : (
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)', fontStyle: 'italic' }}>
+                  {t('tasks.pool_restricted_badge')}
+                </span>
+              )}
             </>
           )}
 
@@ -333,16 +486,66 @@ export default function TaskCard({
             </>
           )}
 
+          {/* Sibling claimed chore: Request transfer (if not parent-allocated) */}
+          {task.status === 'claimed' && isClaimedBySibling && (
+            <>
+              {isParentAllocated ? (
+                <span style={{ fontSize: '0.76rem', color: 'var(--text-dim)', fontStyle: 'italic' }}>
+                  {t('tasks.transfer_not_allowed_parent_locked')}
+                </span>
+              ) : (
+                <>
+                  {task.transfer_requested_by === currentUserId ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--discord-yellow)', fontWeight: 600 }}>
+                        {t('tasks.transfer_request_sent')}
+                      </span>
+                      <button
+                        onClick={handleCancelTransfer}
+                        disabled={loading}
+                        className="btn-task-action"
+                        style={{ padding: '0.2rem 0.45rem', fontSize: '0.72rem', borderRadius: '6px' }}
+                        title={t('tasks.transfer_cancel_btn')}
+                      >
+                        {t('tasks.transfer_cancel_btn')}
+                      </button>
+                    </div>
+                  ) : task.transfer_requested_by ? (
+                    <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)', fontStyle: 'italic' }}>
+                      ⏳ {task.transfer_requested_name || 'Iemand'} vraagt om overname
+                    </span>
+                  ) : (
+                    <button
+                      onClick={handleRequestTransfer}
+                      className="btn-task-action btn-transfer"
+                      disabled={loading}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        fontSize: '0.78rem',
+                        padding: '0.35rem 0.65rem',
+                        borderRadius: '8px',
+                        background: 'rgba(99, 102, 241, 0.12)',
+                        border: '1px solid var(--theme-accent, var(--discord-blurple))',
+                        color: 'var(--theme-accent, var(--discord-blurple))',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                      }}
+                      title={t('tasks.transfer_request_btn')}
+                    >
+                      <ArrowLeftRight size={13} />
+                      <span>{t('tasks.transfer_request_btn')}</span>
+                    </button>
+                  )}
+                </>
+              )}
+            </>
+          )}
+
           {/* Claimant waiting indicator */}
           {task.status === 'pending_approval' && isClaimedByMe && !isParent && (
             <span className="status-waiting-pill">{t('tasks.under_review')}</span>
-          )}
-
-          {/* Sibling claimed indicator */}
-          {task.status === 'claimed' && isClaimedBySibling && (
-            <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)', fontStyle: 'italic' }}>
-              {t('tasks.claimed_by_family')}
-            </span>
           )}
 
           {/* Parent: Delete button */}

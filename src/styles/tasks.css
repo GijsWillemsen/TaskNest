@@ -1190,5 +1190,32 @@
   box-shadow: 0 2px 0 #581c87 !important;
 }
 
+.btn-transfer {
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid var(--theme-accent, var(--discord-blurple));
+  color: var(--theme-accent, var(--discord-blurple));
+  transition: all 0.15s ease;
+}
+
+.btn-transfer:hover:not(:disabled) {
+  background: var(--theme-accent, var(--discord-blurple));
+  color: #ffffff;
+}
+
+[data-theme='candy'] .btn-transfer,
+[data-theme='playful'] .btn-transfer {
+  background: #ffffff !important;
+  color: #7c3aed !important;
+  border: 2px solid #7c3aed !important;
+  box-shadow: 0 3px 0 #581c87 !important;
+}
+
+[data-theme='candy'] .btn-transfer:active:not(:disabled),
+[data-theme='playful'] .btn-transfer:active:not(:disabled) {
+  transform: translateY(2px) !important;
+  box-shadow: 0 1px 0 #581c87 !important;
+}
+
+
 
 
