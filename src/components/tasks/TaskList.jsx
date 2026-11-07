@@ -12,6 +12,7 @@ import {
 import TaskCard from './TaskCard'
 import CreateTaskModal from './CreateTaskModal'
 import { getTasks } from '../../services/taskService'
+import { getFamilyMembers } from '../../services/familyService'
 import { supabase } from '../../supabaseClient'
 import { useLanguage } from '../../context/useLanguage'
 import '../../styles/tasks.css'
@@ -19,6 +20,7 @@ import '../../styles/tasks.css'
 export default function TaskList({ role, currentUserId, familyId, onPointsRefresh }) {
   const { t } = useLanguage()
   const [tasks, setTasks] = useState([])
+  const [familyMembers, setFamilyMembers] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('open') // Standard default tab is now 'open'
   const [searchQuery, setSearchQuery] = useState('')
@@ -34,8 +36,14 @@ export default function TaskList({ role, currentUserId, familyId, onPointsRefres
 
     const loadTasks = async () => {
       try {
-        const data = await getTasks(familyId)
-        if (isMounted) setTasks(data)
+        const [tasksData, membersData] = await Promise.all([
+          getTasks(familyId),
+          getFamilyMembers(familyId),
+        ])
+        if (isMounted) {
+          setTasks(tasksData)
+          setFamilyMembers(membersData)
+        }
       } catch (err) {
         if (isMounted) {
           console.error('Failed to load tasks:', err)
@@ -293,6 +301,7 @@ export default function TaskList({ role, currentUserId, familyId, onPointsRefres
               task={task}
               isParent={isParent}
               currentUserId={currentUserId}
+              familyMembers={familyMembers}
               onTaskUpdated={handleTaskUpdated}
               onTaskDeleted={handleTaskDeleted}
               onError={setErrorMessage}
@@ -308,6 +317,7 @@ export default function TaskList({ role, currentUserId, familyId, onPointsRefres
         onClose={() => setIsModalOpen(false)}
         onTaskCreated={handleTaskCreated}
         familyId={familyId}
+        familyMembers={familyMembers}
       />
     </div>
   )

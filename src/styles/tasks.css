@@ -1038,4 +1038,134 @@
   font-weight: 700 !important;
 }
 
+/* =========================================================
+   TASK ASSIGNEE & ALLOCATION STYLES
+   ========================================================= */
+
+.assignee-selector-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.5rem;
+}
+
+.assignee-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface-elevated);
+  border: 1.5px solid var(--border-subtle);
+  color: var(--text-muted);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.assignee-chip:hover {
+  background: var(--bg-surface-hover);
+  border-color: var(--border-glow);
+  color: var(--text-pure);
+}
+
+.assignee-chip.active {
+  border-color: var(--theme-accent, var(--discord-blurple));
+  background: rgba(88, 101, 242, 0.14);
+  color: var(--text-pure);
+  box-shadow: 0 0 10px rgba(88, 101, 242, 0.22);
+}
+
+.assignee-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.assignee-text strong {
+  font-size: 0.82rem;
+  color: var(--text-pure);
+}
+
+.assignee-text small {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
+
+/* Day Shortcuts Row */
+.day-shortcuts-row {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.day-shortcut-btn {
+  padding: 0.3rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.day-shortcut-btn:hover {
+  color: var(--text-pure);
+  border-color: var(--border-glow);
+}
+
+.day-shortcut-btn.active {
+  background: var(--theme-accent, var(--discord-blurple));
+  color: #ffffff;
+  border-color: transparent;
+}
+
+/* Task Assigned Pill on TaskCard */
+.task-assigned-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.18rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: rgba(245, 158, 11, 0.14);
+  color: var(--discord-orange, #f59e0b);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  margin-top: 0.25rem;
+  width: fit-content;
+}
+
+.task-assigned-pill.is-me {
+  background: rgba(16, 185, 129, 0.14);
+  color: var(--discord-green, #10b981);
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+/* Playful Theme Overrides for Assignee */
+[data-theme='playful'] .assignee-chip,
+[data-theme='candy'] .assignee-chip {
+  background: #f0f9ff !important;
+  border: 2px solid #c4b5fd !important;
+  border-radius: 14px !important;
+}
+
+[data-theme='playful'] .assignee-chip.active,
+[data-theme='candy'] .assignee-chip.active {
+  background: #ffffff !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 3px 0 #7c3aed !important;
+}
+
+[data-theme='playful'] .day-shortcut-btn.active,
+[data-theme='candy'] .day-shortcut-btn.active {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #581c87 !important;
+  box-shadow: 0 2px 0 #581c87 !important;
+}
+
+
 

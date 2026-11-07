@@ -4,6 +4,7 @@ const DAYS_OF_WEEK = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'f
 
 /**
  * Helper to calculate the next due date/time based on recurrence pattern
+ * Supports multi-day recurrence (e.g. 'monday,wednesday,friday')
  */
 export function calculateNextDueDate(recurrence, currentDueDate, recurrenceTime, recurrenceDay) {
   const baseDate = currentDueDate ? new Date(currentDueDate) : new Date()
@@ -12,11 +13,26 @@ export function calculateNextDueDate(recurrence, currentDueDate, recurrenceTime,
   if (recurrence === 'daily') {
     nextDate.setDate(nextDate.getDate() + 1)
   } else if (recurrence === 'weekly') {
-    if (recurrenceDay && DAYS_OF_WEEK.includes(recurrenceDay.toLowerCase())) {
-      const targetIndex = DAYS_OF_WEEK.indexOf(recurrenceDay.toLowerCase())
-      let daysToAdd = (targetIndex - nextDate.getDay() + 7) % 7
-      if (daysToAdd === 0) daysToAdd = 7
-      nextDate.setDate(nextDate.getDate() + daysToAdd)
+    if (recurrenceDay) {
+      const daysList = recurrenceDay.toLowerCase().split(',').map((d) => d.trim()).filter(Boolean)
+      const targetIndices = daysList
+        .map((d) => DAYS_OF_WEEK.indexOf(d))
+        .filter((idx) => idx !== -1)
+
+      if (targetIndices.length > 0) {
+        const currentDayIndex = baseDate.getDay() // 0 = Sunday, 1 = Monday, etc.
+        let daysToAdd = null
+        for (let i = 1; i <= 7; i++) {
+          const candidate = (currentDayIndex + i) % 7
+          if (targetIndices.includes(candidate)) {
+            daysToAdd = i
+            break
+          }
+        }
+        nextDate.setDate(nextDate.getDate() + (daysToAdd || 7))
+      } else {
+        nextDate.setDate(nextDate.getDate() + 7)
+      }
     } else {
       nextDate.setDate(nextDate.getDate() + 7)
     }
@@ -52,7 +68,7 @@ export async function getTasks(familyId) {
 }
 
 /**
- * Create a new task in the family with optional recurrence
+ * Create a new task in the family with optional recurrence and assignment
  */
 export async function createTask({
   familyId,
@@ -63,16 +79,22 @@ export async function createTask({
   recurrence_time = null,
   recurrence_day = null,
   due_date = null,
+  assigned_to = null,
+  claimed_by = null,
+  status = null,
 }) {
   const points = parseInt(points_value, 10) || 10
+  const assigneeId = assigned_to || claimed_by || null
+  const initialStatus = status || (assigneeId ? 'claimed' : 'open')
 
   const taskPayload = {
     family_id: familyId,
     title: title.trim(),
     description: description?.trim() || '',
     points_value: points,
-    status: 'open',
-    claimed_by: null,
+    status: initialStatus,
+    claimed_by: assigneeId,
+    assigned_to: assigneeId,
   }
 
   if (recurrence && recurrence !== 'none') {
@@ -89,9 +111,9 @@ export async function createTask({
     .single()
 
   if (error) {
-    // Fallback if recurrence columns haven't been migrated yet
+    // Fallback if recurrence or assigned_to columns haven't been migrated yet
     if (error.message && (error.message.includes('column') || error.message.includes('schema cache'))) {
-      console.warn('Recurrence columns not found in database, inserting base task payload:', error.message)
+      console.warn('Extended columns not found in database, inserting base task payload:', error.message)
       const { data: fallbackData, error: fallbackError } = await supabase
         .from('tasks')
         .insert([
@@ -100,8 +122,8 @@ export async function createTask({
             title: title.trim(),
             description: description?.trim() || '',
             points_value: points,
-            status: 'open',
-            claimed_by: null,
+            status: initialStatus,
+            claimed_by: assigneeId,
           },
         ])
         .select()
@@ -165,6 +187,7 @@ export async function releaseTask(taskId, userId) {
     .update({
       status: 'open',
       claimed_by: null,
+      assigned_to: null,
     })
     .eq('id', taskId)
     .eq('claimed_by', userId)
@@ -224,13 +247,16 @@ export async function approveTask(taskId, claimantId, pointsValue) {
         updatedTask.recurrence_day
       )
 
+      const isOriginallyAssigned = Boolean(updatedTask.assigned_to)
+
       const nextPayload = {
         family_id: updatedTask.family_id,
         title: updatedTask.title,
         description: updatedTask.description,
         points_value: updatedTask.points_value,
-        status: 'open',
-        claimed_by: null,
+        status: isOriginallyAssigned ? 'claimed' : 'open',
+        claimed_by: isOriginallyAssigned ? updatedTask.assigned_to : null,
+        assigned_to: updatedTask.assigned_to || null,
         recurrence: updatedTask.recurrence,
         recurrence_time: updatedTask.recurrence_time,
         recurrence_day: updatedTask.recurrence_day,
