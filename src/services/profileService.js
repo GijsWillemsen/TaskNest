@@ -78,26 +78,14 @@ export async function deleteUserAccount(userId) {
     console.warn('Reward requests cleanup notice:', rewErr)
   }
 
-  // 3. Call SECURITY DEFINER RPC function to delete from auth.users
-  let rpcSuccess = false
-  try {
-    const { error: rpcError } = await supabase.rpc('delete_user_account')
-    if (!rpcError) {
-      rpcSuccess = true
-    } else {
-      console.warn('RPC delete_user_account error, attempting direct profile delete fallback:', rpcError.message)
-    }
-  } catch (rpcEx) {
-    console.warn('RPC delete_user_account exception:', rpcEx)
-  }
-
-  // 4. Fallback: delete profile record directly if RPC didn't handle it
-  if (!rpcSuccess) {
-    try {
-      await supabase.from('profiles').delete().eq('id', userId)
-    } catch (profErr) {
-      console.warn('Profile deletion fallback error:', profErr)
-    }
+  // 3. Call SECURITY DEFINER RPC function to permanently delete from auth.users
+  const { error: rpcError } = await supabase.rpc('delete_user_account')
+  if (rpcError) {
+    console.error('RPC delete_user_account failed:', rpcError)
+    throw new Error(
+      rpcError.message ||
+        'Kon account niet verwijderen uit authenticatie. Voer de SQL-migratie uit in Supabase.'
+    )
   }
 
   return true

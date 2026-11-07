@@ -213,7 +213,7 @@ export const TRANSLATIONS = {
       delete_account_confirm_word: 'VERWIJDER',
       delete_account_confirm_btn: 'Ja, verwijder mijn account permanent',
       delete_account_success: 'Je account is succesvol verwijderd.',
-      delete_account_error: 'Er is een fout opgetreden bij het verwijderen van je account.',
+      delete_account_error: 'Kon account niet verwijderen. Zorg ervoor dat de SQL-functie "delete_user_account" is toegevoegd in Supabase.',
     },
     auth: {
       login_title: 'Inloggen',
@@ -498,7 +498,7 @@ export const TRANSLATIONS = {
       delete_account_confirm_word: 'DELETE',
       delete_account_confirm_btn: 'Yes, permanently delete my account',
       delete_account_success: 'Your account has been deleted.',
-      delete_account_error: 'An error occurred while deleting your account.',
+      delete_account_error: 'Could not delete account. Make sure the "delete_user_account" SQL function is created in Supabase.',
     },
     auth: {
       login_title: 'Sign In',
