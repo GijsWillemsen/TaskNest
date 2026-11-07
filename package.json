@@ -17,6 +17,7 @@
     "@capacitor/core": "^8.6.0",
     "@supabase/server": "^1.9.2",
     "@supabase/supabase-js": "^2.119.0",
+    "canvas-confetti": "^1.9.4",
     "lucide-react": "^1.70.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",

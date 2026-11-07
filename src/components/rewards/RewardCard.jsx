@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Coins, Trash2, Ticket, Sparkles, Lock } from 'lucide-react'
 import { deleteReward, purchaseRewardTicket, redeemRewardTicket } from '../../services/rewardService'
 import { useLanguage } from '../../context/useLanguage'
+import { celebrateRewardPurchase, celebrateTicketUsed } from '../../utils/confetti'
 
 export default function RewardCard({
   reward,
@@ -16,6 +17,8 @@ export default function RewardCard({
 }) {
   const { t, isDutch } = useLanguage()
   const [submitting, setSubmitting] = useState(false)
+  const [isCelebrated, setIsCelebrated] = useState(false)
+  const [floatingBadge, setFloatingBadge] = useState(null)
 
   const currentPoints = Number(kidPoints) || 0
   const canAfford = currentPoints >= reward.cost
@@ -37,6 +40,14 @@ export default function RewardCard({
         cost: reward.cost,
       })
       const ticket = res.ticket || res
+      celebrateRewardPurchase()
+      setIsCelebrated(true)
+      setFloatingBadge({ text: `🎟️ -${reward.cost} ${t('common.points')}!`, type: 'ticket-bought' })
+      setTimeout(() => {
+        setIsCelebrated(false)
+        setFloatingBadge(null)
+      }, 1500)
+
       if (onRewardRequested) {
         onRewardRequested(ticket)
       }
@@ -47,6 +58,7 @@ export default function RewardCard({
         : `🎉 Ticket purchased for "${reward.title}"!\n\nDo you want to USE this ticket RIGHT NOW?\n(Click OK for "Use Now", or Cancel for "Keep for Later")`
 
       if (window.confirm(useNowQuestion)) {
+        celebrateTicketUsed()
         const usedTicket = await redeemRewardTicket(ticket.id)
         if (onRewardRequested) {
           onRewardRequested(usedTicket)
@@ -88,7 +100,12 @@ export default function RewardCard({
   }
 
   return (
-    <div className={`reward-card ${canAfford ? 'can-afford' : ''}`}>
+    <div className={`reward-card ${canAfford ? 'can-afford' : ''} ${isCelebrated ? 'anim-celebrate-card' : ''}`}>
+      {floatingBadge && (
+        <div className={`floating-celebration-badge ${floatingBadge.type}`}>
+          {floatingBadge.text}
+        </div>
+      )}
       <div className="reward-top">
         <div className="reward-title-group">
           <h3 className="reward-title">{reward.title}</h3>

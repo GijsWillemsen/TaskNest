@@ -372,3 +372,102 @@ textarea {
   font-family: inherit;
   color: inherit;
 }
+
+/* ============================================================
+   FUN CELEBRATION & MICRO-ANIMATIONS
+   ============================================================ */
+
+@keyframes celebrate-pop {
+  0% { transform: scale(0.96); }
+  35% { transform: scale(1.05); }
+  70% { transform: scale(0.98); }
+  100% { transform: scale(1); }
+}
+
+@keyframes celebrate-bounce {
+  0% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-8px) scale(1.08); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+@keyframes float-up-fade {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 15px) scale(0.85);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -6px) scale(1.08);
+  }
+  75% {
+    opacity: 1;
+    transform: translate(-50%, -22px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -38px) scale(0.9);
+  }
+}
+
+.anim-celebrate-card {
+  animation: celebrate-pop 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+
+.floating-celebration-badge {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: #1e1b4b;
+  font-weight: 800;
+  font-size: 0.92rem;
+  padding: 0.45rem 1rem;
+  border-radius: 9999px;
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5), 0 0 0 2px #fef08a;
+  pointer-events: none;
+  z-index: 100;
+  animation: float-up-fade 1.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+
+.floating-celebration-badge.points-earned {
+  background: linear-gradient(135deg, #34d399 0%, #059669 100%);
+  color: #ffffff;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45), 0 0 0 2px #a7f3d0;
+}
+
+.floating-celebration-badge.ticket-bought {
+  background: linear-gradient(135deg, #f472b6 0%, #db2777 100%);
+  color: #ffffff;
+  box-shadow: 0 6px 20px rgba(219, 39, 119, 0.45), 0 0 0 2px #fbcfe8;
+}
+
+.onboarding-celebration-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1.5rem;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.onboarding-celebration-box {
+  background: var(--bg-surface);
+  border: 2px solid var(--theme-accent, var(--discord-blurple));
+  border-radius: var(--radius-xl);
+  padding: 2rem 1.75rem;
+  text-align: center;
+  box-shadow: 0 12px 35px var(--theme-accent-glow, rgba(88, 101, 242, 0.35));
+  max-width: 380px;
+  width: 100%;
+}
+

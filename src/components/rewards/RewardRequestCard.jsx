@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { CheckCircle2, XCircle, Clock, Coins, Sparkles, Ticket } from 'lucide-react'
 import { approveRewardTicket, rejectRewardTicket, redeemRewardTicket } from '../../services/rewardService'
 import { useLanguage } from '../../context/useLanguage'
+import { celebrateTicketUsed } from '../../utils/confetti'
 
 export default function RewardRequestCard({
   request,
@@ -12,6 +13,8 @@ export default function RewardRequestCard({
 }) {
   const { t, isDutch } = useLanguage()
   const [loading, setLoading] = useState(false)
+  const [isCelebrated, setIsCelebrated] = useState(false)
+  const [floatingBadge, setFloatingBadge] = useState(null)
 
   const reward = request.rewards || {
     title: 'Reward item',
@@ -29,6 +32,13 @@ export default function RewardRequestCard({
     setLoading(true)
     try {
       const updated = await redeemRewardTicket(request.id)
+      celebrateTicketUsed()
+      setIsCelebrated(true)
+      setFloatingBadge({ text: isDutch ? '🎟️ Kaartje Ingelost! ⏳' : '🎟️ Ticket Submitted! ⏳', type: 'ticket-bought' })
+      setTimeout(() => {
+        setIsCelebrated(false)
+        setFloatingBadge(null)
+      }, 1500)
       if (onRequestUpdated) onRequestUpdated(updated)
       if (onSuccess) {
         onSuccess(isDutch
@@ -53,6 +63,13 @@ export default function RewardRequestCard({
     setLoading(true)
     try {
       const res = await approveRewardTicket(request.id)
+      celebrateTicketUsed()
+      setIsCelebrated(true)
+      setFloatingBadge({ text: isDutch ? '🎉 Veel Plezier!' : '🎉 Enjoy!', type: 'ticket-bought' })
+      setTimeout(() => {
+        setIsCelebrated(false)
+        setFloatingBadge(null)
+      }, 1500)
       if (onRequestUpdated) {
         onRequestUpdated(res.updatedRequest || res)
       }
@@ -150,7 +167,12 @@ export default function RewardRequestCard({
     : ''
 
   return (
-    <div className={`reward-card reward-card-request status-${request.status}`}>
+    <div className={`reward-card reward-card-request status-${request.status} ${isCelebrated ? 'anim-celebrate-card' : ''}`}>
+      {floatingBadge && (
+        <div className={`floating-celebration-badge ${floatingBadge.type}`}>
+          {floatingBadge.text}
+        </div>
+      )}
       <div className="reward-top">
         <div className="reward-title-group">
           {renderStatusBadge()}
