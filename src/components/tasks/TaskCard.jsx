@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   Coins,
   Check,
@@ -14,6 +14,7 @@ import {
   ArrowLeftRight,
   Users,
   X,
+  Clock,
 } from 'lucide-react'
 import {
   claimTask,
@@ -43,6 +44,17 @@ export default function TaskCard({
   const [loading, setLoading] = useState(false)
   const [isCelebrated, setIsCelebrated] = useState(false)
   const [floatingBadge, setFloatingBadge] = useState(null)
+  const [currentTimestamp] = useState(() => Date.now())
+
+  const hoursLeftUntilExpire = useMemo(() => {
+    if (task.status !== 'completed') return null
+    const compTime = task.completed_at || task.created_at
+    if (!compTime) return null
+    const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000
+    const elapsed = currentTimestamp - new Date(compTime).getTime()
+    const msLeft = Math.max(0, TWENTY_FOUR_HOURS_MS - elapsed)
+    return Math.max(1, Math.ceil(msLeft / (60 * 60 * 1000)))
+  }, [task.status, task.completed_at, task.created_at, currentTimestamp])
 
   const claimantMember = familyMembers.find((m) => m.id === task.claimed_by)
   const isClaimedByMe = task.claimed_by === currentUserId
@@ -114,16 +126,36 @@ export default function TaskCard({
   const handleFinish = async () => {
     setLoading(true)
     try {
-      const updated = await finishTask(task.id, currentUserId)
-      onTaskUpdated(updated)
-      celebrateTaskComplete()
+      const res = await finishTask(
+        task.id,
+        currentUserId,
+        isParent ? 'parent' : 'kid',
+        task.points_value
+      )
+      onTaskUpdated(res)
+      if (isParent) {
+        celebrateTaskApproved()
+        setFloatingBadge({
+          text: `+${task.points_value} ${t('common.points')}!`,
+          type: 'points-earned',
+        })
+        if (onSuccess) {
+          onSuccess(
+            isDutch
+              ? `Klusje "${task.title}" direct voltooid! +${task.points_value} punten verdiend.`
+              : `Chore "${task.title}" completed! +${task.points_value} points earned.`
+          )
+        }
+      } else {
+        celebrateTaskComplete()
+        setFloatingBadge({ text: isDutch ? 'Voltooid!' : 'Done!', type: 'points-earned' })
+        if (onSuccess) onSuccess(t('tasks.finished_success', { title: task.title }))
+      }
       setIsCelebrated(true)
-      setFloatingBadge({ text: isDutch ? 'Voltooid!' : 'Done!', type: 'points-earned' })
       setTimeout(() => {
         setIsCelebrated(false)
         setFloatingBadge(null)
       }, 1400)
-      if (onSuccess) onSuccess(t('tasks.finished_success', { title: task.title }))
     } catch (err) {
       if (onError) onError(err.message || 'Failed to submit task.')
     } finally {
@@ -320,6 +352,44 @@ export default function TaskCard({
                   </>
                 )}
               </div>
+            )}
+            {task.status === 'completed' && (
+              <>
+                <div
+                  className="task-assigned-pill"
+                  style={{
+                    background: 'rgba(52, 211, 153, 0.15)',
+                    borderColor: 'var(--discord-green)',
+                    color: 'var(--discord-green)',
+                    fontWeight: 700,
+                  }}
+                >
+                  <Check size={12} strokeWidth={2.6} />
+                  <span>
+                    {isDutch ? 'Voltooid' : 'Completed'}
+                    {assigneeName ? ` door ${assigneeName}` : ''}
+                  </span>
+                </div>
+                {hoursLeftUntilExpire !== null && (
+                  <div
+                    className="task-assigned-pill"
+                    style={{
+                      background: 'rgba(156, 163, 175, 0.12)',
+                      borderColor: 'var(--border-subtle)',
+                      color: 'var(--text-muted)',
+                      fontSize: '0.74rem',
+                    }}
+                    title={
+                      isDutch
+                        ? 'Voltooide taken verdwijnen automatisch na 24 uur'
+                        : 'Finished tasks disappear automatically after 24 hours'
+                    }
+                  >
+                    <Clock size={11} />
+                    <span>{isDutch ? `Verdwijnt over ${hoursLeftUntilExpire}u` : `Disappears in ${hoursLeftUntilExpire}h`}</span>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
