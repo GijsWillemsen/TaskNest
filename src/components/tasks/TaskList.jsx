@@ -30,64 +30,78 @@ export default function TaskList({ role, currentUserId, familyId, onPointsRefres
 
   const isParent = role === 'parent'
 
-  // Initial load
+  // Fetch tasks and family members
+  const fetchTasksData = useCallback(async (showLoading = false) => {
+    if (showLoading) setLoading(true)
+    try {
+      const [tasksData, membersData] = await Promise.all([
+        getTasks(familyId),
+        getFamilyMembers(familyId),
+      ])
+      setTasks(tasksData)
+      setFamilyMembers(membersData)
+    } catch (err) {
+      console.error('Failed to load tasks:', err)
+      setErrorMessage((prev) => prev || err.message || 'Unable to fetch chores from database.')
+    } finally {
+      setLoading(false)
+    }
+  }, [familyId])
+
+  // Initial load + Realtime channel + 3.5s auto-poll heartbeat + window focus listener
   useEffect(() => {
     let isMounted = true
 
-    const loadTasks = async () => {
-      try {
-        const [tasksData, membersData] = await Promise.all([
-          getTasks(familyId),
-          getFamilyMembers(familyId),
-        ])
-        if (isMounted) {
-          setTasks(tasksData)
-          setFamilyMembers(membersData)
-        }
-      } catch (err) {
-        if (isMounted) {
-          console.error('Failed to load tasks:', err)
-          setErrorMessage(err.message || 'Unable to fetch chores from database.')
-        }
-      } finally {
-        if (isMounted) setLoading(false)
+    // Initial load without resetting spinner
+    fetchTasksData(false)
+
+    // 1. Live auto-polling heartbeat every 3.5 seconds
+    const interval = setInterval(() => {
+      if (!document.hidden && isMounted) {
+        fetchTasksData(false)
+        if (onPointsRefresh) onPointsRefresh()
+      }
+    }, 3500)
+
+    // 2. Immediate refresh when switching back to app/tab
+    const handleVisibility = () => {
+      if (!document.hidden && isMounted) {
+        fetchTasksData(false)
+        if (onPointsRefresh) onPointsRefresh()
       }
     }
+    window.addEventListener('visibilitychange', handleVisibility)
+    window.addEventListener('focus', handleVisibility)
 
-    loadTasks()
-
-    // Realtime subscription for live family updates
+    // 3. Supabase Realtime subscription for instant updates
     const channel = supabase
-      .channel('tasks-live-updates')
+      .channel(`tasks-live-${familyId || 'global'}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'tasks' },
         () => {
-          loadTasks()
-          if (onPointsRefresh) onPointsRefresh()
+          if (isMounted) {
+            fetchTasksData(false)
+            if (onPointsRefresh) onPointsRefresh()
+          }
         }
       )
       .subscribe()
 
     return () => {
       isMounted = false
+      clearInterval(interval)
+      window.removeEventListener('visibilitychange', handleVisibility)
+      window.removeEventListener('focus', handleVisibility)
       supabase.removeChannel(channel)
     }
-  }, [onPointsRefresh, familyId])
+  }, [fetchTasksData, onPointsRefresh, familyId])
 
   // Manual refresh
   const handleManualRefresh = useCallback(async () => {
-    setLoading(true)
-    try {
-      const data = await getTasks(familyId)
-      setTasks(data)
-    } catch (err) {
-      console.error('Failed to refresh tasks:', err)
-      setErrorMessage(err.message || 'Unable to fetch chores from database.')
-    } finally {
-      setLoading(false)
-    }
-  }, [familyId])
+    await fetchTasksData(true)
+    if (onPointsRefresh) onPointsRefresh()
+  }, [fetchTasksData, onPointsRefresh])
 
   // Clear notifications after 5 seconds
   useEffect(() => {

@@ -72,25 +72,49 @@ export default function SettingsPage() {
     let isMounted = true
     if (!familyId) return
 
-    getFamilyMembers(familyId)
-      .then((data) => {
-        if (isMounted) {
-          setMembers(data)
-        }
-      })
-      .catch((err) => {
-        if (isMounted) {
-          console.error('Failed to load family members:', err)
-        }
-      })
-      .finally(() => {
-        if (isMounted) {
-          setLoadingMembers(false)
-        }
-      })
+    const loadMembers = (isSilent = false) => {
+      if (!isSilent) setLoadingMembers(true)
+      getFamilyMembers(familyId)
+        .then((data) => {
+          if (isMounted) {
+            setMembers(data)
+          }
+        })
+        .catch((err) => {
+          if (isMounted && !isSilent) {
+            console.error('Failed to load family members:', err)
+          }
+        })
+        .finally(() => {
+          if (isMounted && !isSilent) {
+            setLoadingMembers(false)
+          }
+        })
+    }
+
+    loadMembers(false)
+
+    // 1. Live auto-polling heartbeat every 3.5 seconds
+    const interval = setInterval(() => {
+      if (!document.hidden && isMounted) {
+        loadMembers(true)
+      }
+    }, 3500)
+
+    // 2. Immediate refresh when switching back to app/tab
+    const handleVisibility = () => {
+      if (!document.hidden && isMounted) {
+        loadMembers(true)
+      }
+    }
+    window.addEventListener('visibilitychange', handleVisibility)
+    window.addEventListener('focus', handleVisibility)
 
     return () => {
       isMounted = false
+      clearInterval(interval)
+      window.removeEventListener('visibilitychange', handleVisibility)
+      window.removeEventListener('focus', handleVisibility)
     }
   }, [familyId])
 
