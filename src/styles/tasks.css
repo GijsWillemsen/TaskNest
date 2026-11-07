@@ -755,34 +755,57 @@
   resize: vertical;
 }
 
-/* Prevent black background on focus in light/playful themes */
+/* Prevent black background on focus in light/playful themes - make slightly darker on focus so typing is clear */
 [data-theme='candy'] .modal-input,
 [data-theme='candy'] .modal-textarea,
+[data-theme='candy'] .modal-content input,
+[data-theme='candy'] .modal-content textarea,
 [data-theme='playful'] .modal-input,
-[data-theme='playful'] .modal-textarea {
-  background-color: #f0f9ff !important;
-  color: #1e1b4b !important;
+[data-theme='playful'] .modal-textarea,
+[data-theme='playful'] .modal-content input,
+[data-theme='playful'] .modal-content textarea {
+  background-color: #f0f7ff !important;
+  color: #0f172a !important;
   border: 2px solid #7c3aed !important;
   border-radius: 12px !important;
 }
 
 [data-theme='candy'] .modal-input:focus,
 [data-theme='candy'] .modal-textarea:focus,
+[data-theme='candy'] .modal-content input:focus,
+[data-theme='candy'] .modal-content textarea:focus,
 [data-theme='playful'] .modal-input:focus,
-[data-theme='playful'] .modal-textarea:focus {
-  background-color: #ffffff !important;
-  color: #1e1b4b !important;
+[data-theme='playful'] .modal-textarea:focus,
+[data-theme='playful'] .modal-content input:focus,
+[data-theme='playful'] .modal-content textarea:focus {
+  background-color: #e0edf9 !important;
+  color: #0f172a !important;
   border-color: #581c87 !important;
-  box-shadow: 0 3px 0 #581c87 !important;
+  box-shadow: 0 3px 0 #581c87, 0 0 0 3px rgba(124, 58, 237, 0.22) !important;
   outline: none !important;
 }
 
 [data-theme='candy'] .modal-input::placeholder,
 [data-theme='candy'] .modal-textarea::placeholder,
+[data-theme='candy'] .modal-content input::placeholder,
+[data-theme='candy'] .modal-content textarea::placeholder,
 [data-theme='playful'] .modal-input::placeholder,
-[data-theme='playful'] .modal-textarea::placeholder {
-  color: #8b5cf6 !important;
-  opacity: 0.65 !important;
+[data-theme='playful'] .modal-textarea::placeholder,
+[data-theme='playful'] .modal-content input::placeholder,
+[data-theme='playful'] .modal-content textarea::placeholder {
+  color: #6b21a8 !important;
+  opacity: 0.7 !important;
+}
+
+[data-theme='candy'] input:-webkit-autofill,
+[data-theme='candy'] input:-webkit-autofill:hover, 
+[data-theme='candy'] input:-webkit-autofill:focus,
+[data-theme='playful'] input:-webkit-autofill,
+[data-theme='playful'] input:-webkit-autofill:hover, 
+[data-theme='playful'] input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #0f172a !important;
+  -webkit-box-shadow: 0 0 0px 1000px #e0edf9 inset !important;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 .points-input-group {

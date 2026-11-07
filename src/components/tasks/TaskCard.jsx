@@ -7,6 +7,8 @@ import {
   Undo2,
   Award,
   RotateCw,
+  RotateCcw,
+  XCircle,
   User,
   UserCheck,
 } from 'lucide-react'
@@ -15,6 +17,7 @@ import {
   finishTask,
   releaseTask,
   approveTask,
+  revertTask,
   deleteTask,
 } from '../../services/taskService'
 import { useLanguage } from '../../context/useLanguage'
@@ -128,6 +131,54 @@ export default function TaskCard({
     }
   }
 
+  const handleRevert = async () => {
+    const confirmPrompt = isDutch
+      ? `Weet je zeker dat je het voltooien van "${task.title}" wilt terugdraaien? De ${task.points_value} punten worden ingehouden en het klusje wordt opnieuw klaargezet.`
+      : `Revert completion of "${task.title}"? ${task.points_value} points will be deducted and the chore reopened.`
+    if (!window.confirm(confirmPrompt)) return
+
+    setLoading(true)
+    try {
+      const updated = await revertTask(task.id)
+      onTaskUpdated(updated)
+      if (onSuccess) {
+        onSuccess(
+          isDutch
+            ? `Voltooiing van "${task.title}" teruggedraaid! ${task.points_value} punten ingehouden.`
+            : `Reverted completion of "${task.title}"! ${task.points_value} points deducted.`
+        )
+      }
+    } catch (err) {
+      if (onError) onError(err.message || 'Failed to revert chore.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDeclinePending = async () => {
+    const confirmPrompt = isDutch
+      ? `Klusje "${task.title}" afwijzen? Het klusje wordt opnieuw opengezet en er worden geen punten toegekend.`
+      : `Decline "${task.title}"? The chore will be reopened and no points awarded.`
+    if (!window.confirm(confirmPrompt)) return
+
+    setLoading(true)
+    try {
+      const updated = await releaseTask(task.id, task.claimed_by)
+      onTaskUpdated(updated)
+      if (onSuccess) {
+        onSuccess(
+          isDutch
+            ? `Klusje "${task.title}" afgewezen en opnieuw opengezet.`
+            : `Chore "${task.title}" declined and reopened.`
+        )
+      }
+    } catch (err) {
+      if (onError) onError(err.message || 'Failed to decline chore.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleDelete = async () => {
     const confirmPrompt = isDutch
       ? `Weet je zeker dat je klusje "${task.title}" wilt verwijderen?`
@@ -195,16 +246,42 @@ export default function TaskCard({
 
         {/* Actions */}
         <div className="task-actions-group">
-          {/* Parent: Approve pending chore */}
+          {/* Parent: Approve or Decline pending chore */}
           {isParent && task.status === 'pending_approval' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              <button
+                onClick={handleDeclinePending}
+                className="btn-task-action btn-unclaim btn-icon-action"
+                style={{ color: 'var(--discord-red)', borderColor: 'rgba(237, 66, 69, 0.4)' }}
+                disabled={loading}
+                title={isDutch ? 'Afwijzen (klusje niet goed gedaan/valsgespeeld)' : 'Decline chore (not completed properly)'}
+                aria-label="Decline"
+              >
+                <XCircle size={16} />
+              </button>
+              <button
+                onClick={handleApprove}
+                className="btn-task-action btn-approve"
+                disabled={loading}
+                title={t('tasks.approve_button')}
+              >
+                <Award size={15} />
+                <span>{t('tasks.approve_button')} ({task.points_value})</span>
+              </button>
+            </div>
+          )}
+
+          {/* Parent: Revert completed task if kid cheated */}
+          {isParent && task.status === 'completed' && (
             <button
-              onClick={handleApprove}
-              className="btn-task-action btn-approve"
+              onClick={handleRevert}
+              className="btn-task-action btn-unclaim"
+              style={{ color: 'var(--discord-red)', borderColor: 'rgba(237, 66, 69, 0.4)', gap: '0.35rem' }}
               disabled={loading}
-              title={t('tasks.approve_button')}
+              title={isDutch ? 'Voltooiing terugdraaien (punten worden ingehouden)' : 'Revert completion (points will be deducted)'}
             >
-              <Award size={15} />
-              <span>{t('tasks.approve_button')} ({task.points_value})</span>
+              <RotateCcw size={14} />
+              <span>{isDutch ? 'Terugdraaien' : 'Revert'}</span>
             </button>
           )}
 

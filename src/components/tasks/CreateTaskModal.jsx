@@ -90,7 +90,7 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated, family
         familyId,
         title,
         description,
-        points_value: pointsValue,
+        points_value: parseInt(pointsValue, 10) || 15,
         recurrence,
         recurrence_time: recurrence !== 'none' && recurrenceTime ? recurrenceTime : null,
         recurrence_day: daysString,
@@ -165,7 +165,6 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated, family
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
-              autoFocus
             />
           </div>
 
@@ -190,7 +189,20 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated, family
                 max="500"
                 className="input-field modal-input points-number-input"
                 value={pointsValue}
-                onChange={(e) => setPointsValue(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                onChange={(e) => {
+                  const raw = e.target.value
+                  if (raw === '') {
+                    setPointsValue('')
+                  } else {
+                    const num = parseInt(raw, 10)
+                    if (!isNaN(num)) setPointsValue(num)
+                  }
+                }}
+                onBlur={() => {
+                  if (!pointsValue || Number(pointsValue) < 1) {
+                    setPointsValue(15)
+                  }
+                }}
               />
               <div className="quick-points-pills">
                 {[10, 15, 20, 30, 50].map((val) => (

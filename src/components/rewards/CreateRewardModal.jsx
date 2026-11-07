@@ -52,7 +52,7 @@ export default function CreateRewardModal({ isOpen, onClose, onRewardCreated, fa
         familyId,
         title,
         description,
-        cost,
+        cost: parseInt(cost, 10) || 20,
       })
       onRewardCreated(newReward)
       onClose()
@@ -137,7 +137,20 @@ export default function CreateRewardModal({ isOpen, onClose, onRewardCreated, fa
                 max="2000"
                 className="input-field modal-input points-number-input"
                 value={cost}
-                onChange={(e) => setCost(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                onChange={(e) => {
+                  const raw = e.target.value
+                  if (raw === '') {
+                    setCost('')
+                  } else {
+                    const num = parseInt(raw, 10)
+                    if (!isNaN(num)) setCost(num)
+                  }
+                }}
+                onBlur={() => {
+                  if (!cost || Number(cost) < 1) {
+                    setCost(20)
+                  }
+                }}
               />
               <div className="quick-points-pills">
                 {[20, 30, 40, 50, 100].map((val) => (

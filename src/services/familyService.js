@@ -116,3 +116,63 @@ export async function getFamilyMembers(familyId) {
   return data || []
 }
 
+/**
+ * Update the family name
+ */
+export async function updateFamilyName(familyId, newName) {
+  const cleanName = newName.trim()
+  if (!cleanName) throw new Error('Family name cannot be empty.')
+
+  const { data, error } = await supabase
+    .from('families')
+    .update({ name: cleanName })
+    .eq('id', familyId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+/**
+ * Parent adds or removes points from any family member (Kid or Parent)
+ */
+export async function adjustMemberPoints(memberId, deltaPoints) {
+  const { data: prof, error: fetchErr } = await supabase
+    .from('profiles')
+    .select('points')
+    .eq('id', memberId)
+    .single()
+
+  if (fetchErr) throw fetchErr
+
+  const currentPts = prof.points || 0
+  const newPoints = Math.max(0, currentPts + Number(deltaPoints))
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ points: newPoints })
+    .eq('id', memberId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+/**
+ * Set exact points balance for a family member
+ */
+export async function setMemberPoints(memberId, exactPoints) {
+  const safePoints = Math.max(0, parseInt(exactPoints, 10) || 0)
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ points: safePoints })
+    .eq('id', memberId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
