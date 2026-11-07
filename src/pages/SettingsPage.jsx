@@ -203,7 +203,8 @@ export default function SettingsPage() {
       setShowDeleteModal(false)
     } catch (err) {
       console.error('Delete account failed:', err)
-      setToast({ message: t('settings.delete_account_error'), type: 'error' })
+      const errorMsg = err?.message || t('settings.delete_account_error')
+      setToast({ message: errorMsg, type: 'error' })
       setIsDeleting(false)
     }
   }
