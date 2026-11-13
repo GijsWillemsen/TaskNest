@@ -6,6 +6,7 @@ import { useLanguage } from '../../context/useLanguage'
 import { THEMES } from '../../context/theme-context'
 import { createFamily, joinFamilyByCode } from '../../services/familyService'
 import Toast from '../common/Toast'
+import QrScannerModal from '../common/QrScannerModal'
 import {
   Mail,
   Lock,
@@ -25,6 +26,8 @@ import {
   Languages,
   Globe,
   PartyPopper,
+  QrCode,
+  Camera,
 } from 'lucide-react'
 import '../../styles/auth.css'
 import { celebrateOnboardingFinish } from '../../utils/confetti'
@@ -53,7 +56,35 @@ export default function SignUp() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [familyName, setFamilyName] = useState('')
-  const [inviteCode, setInviteCode] = useState('')
+  const [inviteCode, setInviteCode] = useState(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search)
+        const codeFromUrl = params.get('code')
+        if (codeFromUrl && /^[A-Za-z0-9]{6}$/.test(codeFromUrl.trim())) {
+          return codeFromUrl.trim().toUpperCase()
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return ''
+  })
+  const [parentFamilyMode, setParentFamilyMode] = useState(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search)
+        const codeFromUrl = params.get('code')
+        if (codeFromUrl && /^[A-Za-z0-9]{6}$/.test(codeFromUrl.trim())) {
+          return 'join'
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return 'create'
+  })
+  const [showScanner, setShowScanner] = useState(false)
 
   const [toast, setToast] = useState({ message: '', type: 'error' })
   const [submitting, setSubmitting] = useState(false)
@@ -64,6 +95,12 @@ export default function SignUp() {
 
   const showError = (msg) => setToast({ message: msg, type: 'error' })
   const showSuccess = (msg) => setToast({ message: msg, type: 'success' })
+
+  const handleScanSuccess = (code) => {
+    setInviteCode(code)
+    setShowScanner(false)
+    showSuccess(t('auth.scan_qr_success', { code }))
+  }
 
   // Synchronize active theme preview as the user selects a theme in Step 3
   useEffect(() => {
@@ -122,6 +159,8 @@ export default function SignUp() {
     // Realistic email regex verifying recipient, @, domain, and valid TLD (.com, .nl, etc.)
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 
+    const isJoining = role === 'kid' || (role === 'parent' && parentFamilyMode === 'join')
+
     if (!cleanEmail || !password) {
       showError(t('auth.err_enter_credentials'))
       return
@@ -142,12 +181,12 @@ export default function SignUp() {
       return
     }
 
-    if (role === 'parent' && !familyName.trim()) {
+    if (!isJoining && !familyName.trim()) {
       showError(t('auth.err_enter_family_name'))
       return
     }
 
-    if (role === 'kid') {
+    if (isJoining) {
       const code = inviteCode.trim().toUpperCase()
       if (!code) {
         showError(t('auth.err_enter_code'))
@@ -168,8 +207,8 @@ export default function SignUp() {
         role,
         displayName: displayName.trim(),
         themePreference: themeChoice,
-        familyName: role === 'parent' ? familyName.trim() : null,
-        inviteCode: role === 'kid' ? inviteCode.trim().toUpperCase() : null,
+        familyName: !isJoining ? familyName.trim() : null,
+        inviteCode: isJoining ? inviteCode.trim().toUpperCase() : null,
       })
 
       const userId = authData?.user?.id
@@ -179,7 +218,7 @@ export default function SignUp() {
 
       // 2. Client-side fallback setup for family
       try {
-        if (role === 'parent') {
+        if (!isJoining) {
           const newFam = await createFamily({
             name: familyName.trim(),
             userId,
@@ -592,7 +631,59 @@ export default function SignUp() {
             </div>
 
             {/* Family Setup Fields */}
-            {role === 'parent' ? (
+            {role === 'parent' && (
+              <div style={{ marginBottom: '1.1rem' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    background: 'var(--bg-glass-elevated, var(--bg-tertiary))',
+                    padding: '4px',
+                    borderRadius: '12px',
+                    gap: '4px',
+                    border: '1px solid var(--border-color)',
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setParentFamilyMode('create')}
+                    style={{
+                      flex: 1,
+                      padding: '0.55rem 0.75rem',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: parentFamilyMode === 'create' ? 'var(--theme-accent, var(--discord-blurple))' : 'transparent',
+                      color: parentFamilyMode === 'create' ? '#ffffff' : 'var(--text-muted)',
+                      fontWeight: 700,
+                      fontSize: '0.82rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    {t('auth.parent_create_family')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setParentFamilyMode('join')}
+                    style={{
+                      flex: 1,
+                      padding: '0.55rem 0.75rem',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: parentFamilyMode === 'join' ? 'var(--theme-accent, var(--discord-blurple))' : 'transparent',
+                      color: parentFamilyMode === 'join' ? '#ffffff' : 'var(--text-muted)',
+                      fontWeight: 700,
+                      fontSize: '0.82rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    {t('auth.parent_join_family')}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {role === 'parent' && parentFamilyMode === 'create' ? (
               <div className="form-group">
                 <label htmlFor="familyName" className="form-label">
                   {t('auth.family_name_label')}
@@ -617,27 +708,76 @@ export default function SignUp() {
               </div>
             ) : (
               <div className="form-group">
-                <label htmlFor="inviteCode" className="form-label">
-                  {t('auth.invite_code_label')}
-                </label>
-                <div className="input-wrapper">
-                  <div className="input-icon-left">
-                    <KeyRound size={18} />
-                  </div>
-                  <input
-                    id="inviteCode"
-                    type="text"
-                    maxLength={6}
-                    className="input-field"
-                    placeholder={t('auth.invite_code_placeholder')}
-                    value={inviteCode}
-                    onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-                    style={{ textTransform: 'uppercase', letterSpacing: '0.15em', fontWeight: 700 }}
-                    required
-                  />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                  <label htmlFor="inviteCode" className="form-label" style={{ margin: 0 }}>
+                    {t('auth.invite_code_label')}
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowScanner(true)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--theme-accent, var(--discord-blurple))',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      padding: '2px 6px',
+                    }}
+                  >
+                    <QrCode size={15} />
+                    <span>{t('auth.scan_qr_btn')}</span>
+                  </button>
                 </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'stretch' }}>
+                  <div className="input-wrapper" style={{ flex: 1 }}>
+                    <div className="input-icon-left">
+                      <KeyRound size={18} />
+                    </div>
+                    <input
+                      id="inviteCode"
+                      type="text"
+                      maxLength={6}
+                      className="input-field"
+                      placeholder={t('auth.invite_code_placeholder')}
+                      value={inviteCode}
+                      onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                      style={{ textTransform: 'uppercase', letterSpacing: '0.15em', fontWeight: 700 }}
+                      required
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowScanner(true)}
+                    title={t('auth.scan_qr_btn')}
+                    className="action-btn-secondary"
+                    style={{
+                      flex: '0 0 auto',
+                      padding: '0 1rem',
+                      borderRadius: '12px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      background: 'var(--bg-glass-elevated, var(--bg-tertiary))',
+                      border: '1px solid var(--border-color)',
+                      color: 'var(--text-pure)',
+                      fontSize: '0.85rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <Camera size={16} style={{ color: 'var(--theme-accent, var(--discord-blurple))' }} />
+                    <span className="hide-on-mobile">{t('auth.scan_qr_btn')}</span>
+                  </button>
+                </div>
+
                 <span className="form-helper-text">
-                  {t('auth.kid_helper')}
+                  {role === 'parent' ? t('auth.parent_join_helper') : t('auth.kid_helper')}
                 </span>
               </div>
             )}
@@ -678,6 +818,14 @@ export default function SignUp() {
           <Link to="/login">{t('auth.have_account')}</Link>
         </div>
       </div>
+
+      {showScanner && (
+        <QrScannerModal
+          isOpen={showScanner}
+          onClose={() => setShowScanner(false)}
+          onScanSuccess={handleScanSuccess}
+        />
+      )}
     </div>
   )
 }

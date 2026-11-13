@@ -11,6 +11,7 @@ import {
 } from '../services/familyService'
 import { deleteUserAccount } from '../services/profileService'
 import Toast from '../components/common/Toast'
+import FamilyQrModal from '../components/common/FamilyQrModal'
 import {
   User,
   Users,
@@ -31,6 +32,7 @@ import {
   AlertTriangle,
   Trash2,
   AlertCircle,
+  QrCode,
 } from 'lucide-react'
 import '../styles/auth.css'
 import '../styles/tasks.css'
@@ -40,6 +42,7 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme()
   const { t, lang, setLanguage, isDutch } = useLanguage()
   const [copied, setCopied] = useState(false)
+  const [showQrModal, setShowQrModal] = useState(false)
   const [members, setMembers] = useState([])
   const [loadingMembers, setLoadingMembers] = useState(false)
   const [toast, setToast] = useState({ message: '', type: 'error' })
@@ -624,29 +627,52 @@ export default function SettingsPage() {
               </p>
             </div>
 
-            <button
-              onClick={handleCopyCode}
-              type="button"
-              className="auth-submit-btn action-btn-primary"
-              style={{
-                width: 'auto',
-                margin: 0,
-                padding: '0.65rem 1.25rem',
-                fontSize: '0.88rem',
-                background: copied ? 'var(--discord-green)' : 'var(--theme-accent, var(--discord-blurple))',
-                color: '#ffffff',
-              }}
-            >
-              {copied ? (
-                <>
-                  <Check size={16} /> {t('settings.code_copied')}
-                </>
-              ) : (
-                <>
-                  <Copy size={16} /> {t('settings.copy_code')}
-                </>
-              )}
-            </button>
+            <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              <button
+                onClick={handleCopyCode}
+                type="button"
+                className="auth-submit-btn action-btn-primary"
+                style={{
+                  width: 'auto',
+                  margin: 0,
+                  padding: '0.65rem 1.15rem',
+                  fontSize: '0.88rem',
+                  background: copied ? 'var(--discord-green)' : 'var(--theme-accent, var(--discord-blurple))',
+                  color: '#ffffff',
+                }}
+              >
+                {copied ? (
+                  <>
+                    <Check size={16} /> {t('settings.code_copied')}
+                  </>
+                ) : (
+                  <>
+                    <Copy size={16} /> {t('settings.copy_code')}
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={() => setShowQrModal(true)}
+                type="button"
+                className="auth-submit-btn"
+                style={{
+                  width: 'auto',
+                  margin: 0,
+                  padding: '0.65rem 1.15rem',
+                  fontSize: '0.88rem',
+                  background: 'var(--bg-glass-elevated, var(--bg-tertiary))',
+                  color: 'var(--text-pure)',
+                  border: '1px solid var(--border-color)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                }}
+              >
+                <QrCode size={16} style={{ color: 'var(--theme-accent, var(--discord-blurple))' }} />
+                <span>{isDutch ? 'Toon QR-code' : 'Show QR Code'}</span>
+              </button>
+            </div>
           </div>
         ) : (
           <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginBottom: '1rem' }}>
@@ -1084,6 +1110,16 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Family QR Code Modal */}
+      {showQrModal && (
+        <FamilyQrModal
+          isOpen={showQrModal}
+          onClose={() => setShowQrModal(false)}
+          familyName={family?.name}
+          inviteCode={family?.invite_code}
+        />
       )}
 
       {/* Clean Footer */}

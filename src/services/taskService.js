@@ -1,4 +1,5 @@
 import { supabase } from '../supabaseClient'
+import { createFamilyNotification } from './notificationService'
 
 const DAYS_OF_WEEK = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
 
@@ -163,10 +164,32 @@ export async function createTask({
         .select()
         .single()
       if (fallbackError) throw fallbackError
+      if (assigneeId && fallbackData?.id) {
+        createFamilyNotification({
+          familyId,
+          userId: assigneeId,
+          title: 'Nieuw klusje toegewezen! 🎯',
+          body: `"${title.trim()}" (+${points} pt) is aan jou toegewezen door een ouder.`,
+          type: 'task_assigned',
+          taskId: fallbackData.id,
+        })
+      }
       return fallbackData
     }
     throw error
   }
+
+  if (assigneeId && data?.id) {
+    createFamilyNotification({
+      familyId,
+      userId: assigneeId,
+      title: 'Nieuw klusje toegewezen! 🎯',
+      body: `"${title.trim()}" (+${points} pt) is aan jou toegewezen door een ouder.`,
+      type: 'task_assigned',
+      taskId: data.id,
+    })
+  }
+
   return data
 }
 
@@ -215,6 +238,19 @@ export async function finishTask(taskId, userId, role = 'kid', pointsValue = nul
     .single()
 
   if (error) throw error
+
+  if (data) {
+    createFamilyNotification({
+      familyId: data.family_id,
+      targetRole: 'parent',
+      senderId: userId,
+      title: 'Klusje ter goedkeuring ⏳',
+      body: `Het klusje "${data.title}" is voltooid en wacht op jouw controle.`,
+      type: 'task_completed',
+      taskId: data.id,
+    })
+  }
+
   return data
 }
 
@@ -340,6 +376,18 @@ export async function approveTask(taskId, claimantId, pointsValue) {
     }
   }
 
+  // Notify claimant about approval and earned points
+  if (claimantId && updatedTask) {
+    createFamilyNotification({
+      familyId: updatedTask.family_id,
+      userId: claimantId,
+      title: 'Klusje goedgekeurd! 🎉',
+      body: `Goed gedaan! Je hebt +${pointsValue || updatedTask.points_value || 0} punten verdiend met "${updatedTask.title}".`,
+      type: 'task_approved',
+      taskId: updatedTask.id,
+    })
+  }
+
   return { updatedTask, nextTask }
 }
 
@@ -419,6 +467,20 @@ export async function requestTaskTransfer(taskId, requesterId, requesterName) {
     .single()
 
   if (error) throw error
+
+  if (data?.claimed_by) {
+    createFamilyNotification({
+      familyId: data.family_id,
+      userId: data.claimed_by,
+      senderId: requesterId,
+      senderName: requesterName,
+      title: 'Verzoek tot overname 🔄',
+      body: `${requesterName || 'Een gezinslid'} vraagt om jouw klusje "${data.title}" over te nemen.`,
+      type: 'task_transfer',
+      taskId: data.id,
+    })
+  }
+
   return data
 }
 
@@ -451,6 +513,18 @@ export async function acceptTaskTransfer(taskId) {
     .single()
 
   if (error) throw error
+
+  if (data) {
+    createFamilyNotification({
+      familyId: data.family_id,
+      userId: newClaimant,
+      title: 'Overname geaccepteerd! 🤝',
+      body: `Het klusje "${data.title}" is nu aan jou overgedragen. Veel succes!`,
+      type: 'task_transfer_accepted',
+      taskId: data.id,
+    })
+  }
+
   return data
 }
 

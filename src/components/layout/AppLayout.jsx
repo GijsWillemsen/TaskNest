@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom'
 import { useAuth } from '../../context/useAuth'
 import { useLanguage } from '../../context/useLanguage'
 import BottomNavBar from '../navigation/BottomNavBar'
+import NotificationBell from '../navigation/NotificationBell'
 import FamilySetupPrompt from '../family/FamilySetupPrompt'
 import { Coins, Users } from 'lucide-react'
 import '../../styles/auth.css'
@@ -34,7 +35,9 @@ export default function AppLayout() {
           </div>
         </div>
 
-        <div className="nav-actions">
+        <div className="nav-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          <NotificationBell />
+
           {displayName && (
             <span
               style={{
