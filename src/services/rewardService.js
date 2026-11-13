@@ -1,4 +1,5 @@
 import { supabase } from '../supabaseClient'
+import { createFamilyNotification } from './notificationService'
 
 /**
  * Fetch all available catalog rewards for a family
@@ -128,6 +129,21 @@ export async function redeemRewardTicket(ticketId) {
     .single()
 
   if (error) throw error
+
+  if (data) {
+    const kidName = data.profiles?.display_name || 'Een gezinslid'
+    const rewardTitle = data.rewards?.title || 'beloning'
+    createFamilyNotification({
+      familyId: data.family_id,
+      targetRole: 'parent',
+      senderId: data.kid_id,
+      senderName: kidName,
+      title: 'Beloning verzilveren 🎁',
+      body: `${kidName} wil een ticket inleveren voor: "${rewardTitle}".`,
+      type: 'reward_requested',
+    })
+  }
+
   return data
 }
 
@@ -155,6 +171,18 @@ export async function approveRewardTicket(ticketId) {
     .single()
 
   if (error) throw error
+
+  if (data) {
+    const rewardTitle = data.rewards?.title || 'beloning'
+    createFamilyNotification({
+      familyId: data.family_id,
+      userId: data.kid_id,
+      title: 'Beloning goedgekeurd! 🥳',
+      body: `Veel plezier met je beloning: "${rewardTitle}"!`,
+      type: 'reward_approved',
+    })
+  }
+
   return { updatedRequest: data }
 }
 

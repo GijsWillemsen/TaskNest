@@ -11,3 +11,4 @@ ALTER TABLE public.tasks
 UPDATE public.tasks 
 SET completed_at = created_at 
 WHERE status = 'completed' AND completed_at IS NULL;
+
